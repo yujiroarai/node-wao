@@ -1,0 +1,16 @@
+{
+  "name": "wao",
+  "version": "0.0.0",
+  "description": "",
+  "main": "helloworld.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "jquery": "^2.1.1",
+    "jsdom": "^0.11.1"
+  }
+}
