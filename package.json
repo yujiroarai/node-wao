@@ -11,6 +11,8 @@
   "license": "ISC",
   "dependencies": {
     "jquery": "^2.1.1",
-    "jsdom": "^0.11.1"
+    "jsdom": "^0.11.1",
+    "mongodb": "^1.4.8",
+    "mongoose": "^3.8.14"
   }
 }

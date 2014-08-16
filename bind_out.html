@@ -1,6 +1,41 @@
 <html>
+  <head>
+    <script type="text/wao">
+      var Shop = mongoose.model('Shop');
+      var shop = new Shop();
+
+      shop.name  = 'headwaters あらいさん';
+      shop.save(function(err) {
+        if (err) { console.log(err); }
+      });
+
+      Shop.find({}, function(err, docs) {
+        for (var i in docs) {
+          console.log(docs[i].name);
+        }
+      });
+
+      // db.shop.find({}, function(err, collection) {
+      //   console.log(collection);
+      // });
+    </script>
+  </head>
   <body>
     <h1>waowaowao!!</h1>
+    <span data-bind-out='hhhjjjj' data-wao-bind-result="ttt">hogehoge</span>
     <span data-bind-out='{ "ARG": "shop.name", "TARGET": "text", "RESULT": "shop-item" }'>hogehoge</span>
+    <span data-bind-out='{ "ARG": "shop.name", "TARGET": "text", "RESULT": "shop-item" }'>hogehoge</span>
+    <span data-bind-out='{ "ARG": "shop.name", "TARGET": "text", "RESULT": "shop-item" }'>hogehoge</span>
+    <span data-bind-out='{ "ARG": "shop.name", "TARGET": "text", "RESULT": "shop-item" }'>hogehoge</span>
+    <span data-bind-out='{ "ARG": "shop.name", "TARGET": "text", "RESULT": "shop-item" }'>hogehoge</span>
+    <span data-bind-out='{ "ARG": "shop.name", "TARGET": "text", "RESULT": "shop-item" }'>hogehoge</span>
+    <span data-bind-out='{ "ARG": "shop.name", "TARGET": "text", "RESULT": "shop-item" }'>hogehoge</span>
+    <span data-bind-out='{ "ARG": "shop.name", "TARGET": "text", "RESULT": "shop-item" }'>hogehoge</span>
+    <ul data-wao-loop="shop">
+      <li>
+        <span data-wao-bind-text="shop.id"></span>
+      </li>
+    </ul>
+
   </body>
 </html>
