@@ -1,10 +1,20 @@
-var http = require('http'), fs = require('fs');
+var http = require("http");
+var url = require("url");
 
-http.createServer(function (request, response) {
+function start(route) {
+  function onRequest(request, response) {
+    var pathname = url.parse(request.url).pathname;
+    console.log("Request for " + pathname + " received.");
 
-  fs.readFile('./hello.html', 'UTF-8', function(err, data) {
-    response.writeHead(200, { 'Content-Type': 'text/html' });
-    response.end(data);
-  });
+    route(pathname);
 
-}).listen(process.env.PORT || 8080);
+    response.writeHead(200, {"Content-Type": "text/html"});
+    // response.write("Hello World");
+    response.end();
+  }
+
+  http.createServer(onRequest).listen(8888);
+  console.log("Server has started.");
+}
+
+exports.start = start;

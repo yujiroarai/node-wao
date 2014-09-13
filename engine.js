@@ -7,6 +7,9 @@ var shop_item = { "shop.name" : "tanio", "shop.id" : 'AA' };
 
 http.createServer(function (request, response) {
 
+  
+
+
   fs.readFile(__dirname + '/bind_out.html', function (err, data) {
     if (err) throw err;
 
