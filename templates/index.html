@@ -25,13 +25,13 @@
             <label for="event">イベント名</label>&nbsp;
             <span class="label label-danger">必須</span><br>
             <small>※今期もお疲れ様でした飲み会、打ち合わせなど</small>
-            <input type="text" class="form-control" id="event" placeholder="イベント名を入力してください">
+            <input type="text" class="form-control" name="event.name" placeholder="イベント名を入力してください">
           </div>
           <div class="form-group">
             <label for="event">メモ</label>&nbsp;
             <span class="label label-default">任意</span><br>
             <small>※場所は◯◯を予定しています。など</small>
-            <textarea class="form-control" id="event" placeholder="任意でメモを入力できます" rows="10"></textarea>
+            <textarea class="form-control" name="event.memo" placeholder="任意でメモを入力できます" rows="10"></textarea>
           </div>
         </div>
         <div class="col-md-4">
@@ -46,7 +46,7 @@
               8/8(火) 20:00～<br>
               8/9(水) 21:00～
             </small>
-            <textarea class="form-control" id="event" placeholder="候補日程を複数入力する場合は改行して指定します" rows="10"></textarea>
+            <textarea class="form-control" name="event.schedule" placeholder="候補日程を複数入力する場合は改行して指定します" rows="10"></textarea>
           </div>
         </div>
         <div class="col-md-4">

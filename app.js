@@ -2,6 +2,7 @@
 var http = require('http'),
   conf = require('config'),
   url = require('url'),
+  querystring = require('querystring'),
   fs = require('fs'),
   mime = require('mime'),
   jsdom = require("jsdom"),
@@ -9,8 +10,16 @@ var http = require('http'),
   mongo = require('mongodb'),
   mongoose = require('mongoose');
 
-http.createServer(function (request, response) {
+http.createServer(function(request, response) {
   var waoPage = WaoPageFactory();
+  // methodで処理を切り分け
+  // POSTメソッド・・・データの追加
+  if (request.method == 'POST') {
+    waoPage.postData(request);
+  }
+  // PUTメソッド・・・データの変更
+  // DELETEメソッド・・・データの削除
+  // GETメソッド・・・データの取得
   // テンプレートを読み込む
   waoPage.readTemplate(request, function(err, data) {
     if (err) throw err;
@@ -38,8 +47,39 @@ var WaoPageFactory = function() {
     redirectUrl,
     statusCode;
   return {
+    // POSTメソッドの処理（データの追加）
+    postData : function(request) {
+      var data = '';
+      request.on('data', function(chunk) {
+        data += chunk;
+      });
+      request.on('end', function() {
+        var collectionName;
+        var insData = {};
+        // POSTデータをJSON化
+        var query = querystring.parse(data);
+        // JSON化したPOSTデータをmongoDBに入れられるJSON形式
+        for (var key in query) {
+          // <input name="collactionName.propertyName">
+          collectionName = key.match(/^([^.]+)\./)[1]; // TODO：collectionの決定方法がアホ
+          insData[key.replace(collectionName + '.', '')] = query[key];
+        }
+        // mongoDBにデータを登録
+        var mongoServer = new mongo.Server('localhost', mongo.Connection.DEFAULT_PORT, {});
+        var db = new mongo.Db('testDB', mongoServer, {});
+        db.open(function() {
+          db.collection(collectionName, function(err, collection) {
+            collection.insert(insData, function() {
+              // TODO：_idをどうやって通知しようか？
+              db.close();
+            });
+          });
+        });
+      });
+    },
     // URLルーティングの処理
     // TODO：expressに置き換えるか検証・検討
+    // → expressだとURLパターンごとに関数を用意しなければならない？
     getFilePathByURL : function(urlpath) {
       var urlElements = url.parse(urlpath, true);
       var filepath = urlElements.pathname;
@@ -63,7 +103,7 @@ var WaoPageFactory = function() {
           me.mimeType = mime.lookup(filepath);
           if (me.mimeType == "text/html") {
             // <meta http-equiv="refresh">の指定があればサーバー側で301リダイレクトする
-            var $dom = $(data);
+            var $dom = $(data); // TODO：<!DOCTYPE>に対応できてない ＆ parseできない時の処理が必要
             var $redirect = $dom.find('meta[http-equiv=refresh]');
             if ($redirect) {
               var contextMatch = ($redirect.attr('content')+"").match(/^[0-9]+;[ ]+URL=(.*)$/);
