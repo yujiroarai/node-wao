@@ -7,14 +7,7 @@ var http = require('http'),
   mime = require('mime'),
   jsdom = require("jsdom"),
   $ = require("jquery")(jsdom.jsdom().createWindow()),
-  mongo = require('mongodb'),
-  mongoose = require('mongoose');
-
-// データベースへの接続
-var mongoServer = new mongo.Server('localhost', mongo.Connection.DEFAULT_PORT, {});
-// TODO：DB名の指定（名前固定だと複数アプリに対応できない　＆　環境別に名前を付けたい＜例＞myapp_staging）
-var db = new mongo.Db('testDB', mongoServer, {});
-db.open(function() {});
+  mongo = require('mongodb');
 
 // jQueryの拡張
 (function($) {
@@ -26,54 +19,89 @@ db.open(function() {});
   }
 })($);
 
-http.createServer(function(request, response) {
-  console.log('Start http process.');
-  console.log('  URL="' + request.url + '", method="' + request.method + '"');
-  console.log('');
-  var waoPage = WaoPageFactory();
-  // methodで処理を切り分け
-  // PUTメソッド・・・データの変更
-  // DELETEメソッド・・・データの削除
-  // POSTメソッド・・・データの追加
-  waoPage.postData(request, function(err, data) {
-    if (err) throw err;
-    // GETメソッド・・・データの取得
-    waoPage.getData(request, function(err, data) {
-      if (err) throw err;
-      // テンプレートを読み込む
-      waoPage.readTemplate(request, function(err, data) {
-        if (err) throw err;
-        // レスポンス出力
-        var status = waoPage.getStatusCode();
-        var mimeType = waoPage.getMimeType();
-        if (status == 200) {
-          console.log('Start response. statusCode=' + status + ', mimeType="' + mimeType + '"');
-          response.writeHead(status, { 'Content-Type': mimeType });
-          response.end(waoPage.getResponseData());
-        } else if (status == 301) {
-          var redirectUrl = 'http://localhost:8888' + waoPage.getRedirectUrl(); // TODO：ホスト名とか
-          console.log('Start response. statusCode=' + status + ', Location="' + redirectUrl + '"');
-          response.writeHead(status, { 'Location': redirectUrl });
-          response.end();
-        } else {
-          console.log('Start response. statusCode=' + status);
-          response.statusCode = (status);
-          response.end();
-        }
-        console.log('------------------------------');
+var WaoAppFactory = function() {
+  var appname,
+    appdir,
+    dbname,
+    port;
+  return {
+    createHttpServer : function(appname, port) {
+      this.appname = appname;
+      this.port = port;
+      this.dbname = appname + '_' + port;
+      this.appdir = appname + '_' + port;
+      var myWaoApp = this;
+      var s = http.createServer(function(request, response) {
+        console.log('Start http process.');
+        console.log('  URL="' + request.url + '", method="' + request.method + '"');
         console.log('');
+        var waoPage = WaoPageFactory();
+        waoPage.init(myWaoApp.dbname, function(err, data) {
+          // methodで処理を切り分け
+          // PUTメソッド・・・データの変更
+          // DELETEメソッド・・・データの削除
+          // POSTメソッド・・・データの追加
+          waoPage.postData(request, function(err, data) {
+            if (err) throw err;
+            // GETメソッド・・・データの取得
+            waoPage.getData(request, function(err, data) {
+              if (err) throw err;
+              // テンプレートを読み込む
+              waoPage.readTemplate(myWaoApp.appdir, request, function(err, data) {
+                if (err) throw err;
+                // レスポンス出力
+                var status = waoPage.getStatusCode();
+                var mimeType = waoPage.getMimeType();
+                if (status == 200) {
+                  console.log('Start response. statusCode=' + status + ', mimeType="' + mimeType + '"');
+                  response.writeHead(status, { 'Content-Type': mimeType });
+                  response.end(waoPage.getResponseData());
+                } else if (status == 301) {
+                  var redirectUrl = 'http://localhost:' + myWaoApp.port + waoPage.getRedirectUrl(); // TODO：ホスト名とか
+                  console.log('Start response. statusCode=' + status + ', Location="' + redirectUrl + '"');
+                  response.writeHead(status, { 'Location': redirectUrl });
+                  response.end();
+                } else {
+                  console.log('Start response. statusCode=' + status);
+                  response.statusCode = (status);
+                  response.end();
+                }
+                console.log('------------------------------');
+                console.log('');
+              });
+            })
+          });
+        });
       });
-    })
-  });
-}).listen(process.env.PORT || 8888);
+      s.listen(port);
+      return s;
+    }
+  };
+}
+
+var waoApp = WaoAppFactory();
+waoApp.createHttpServer('myapp', 8765);
 
 var WaoPageFactory = function() {
   var responseData,
     mimeType,
     redirectUrl,
     statusCode,
+    db,
     crudData;
   return {
+    init : function(dbname, callback) {
+      this.crudData = { find : {}, insert: {} };
+      this.findData = {};
+      // データベースへの接続
+      // TODO：何でもかんでもつなぎにいっちゃうバカなやつ
+      var mongoServer = new mongo.Server('localhost', mongo.Connection.DEFAULT_PORT, {});
+      this.db = new mongo.Db(dbname, mongoServer, {});
+      this.db.open(function(err, db) {
+        console.log('Success to open db connection. dbname=' + dbname);
+        callback(null, null);
+      });
+    },
     // POSTメソッドの処理（データの追加）
     // TODO：リファラからテンプレートを選択してフォームの整合性をチェックする処理を追加する
     // ・余計なフォームが送信されて来ていないか？
@@ -86,7 +114,7 @@ var WaoPageFactory = function() {
           data += chunk;
         });
         request.on('end', function() {
-          if (!me.crudData) me.crudData = { find : {}, insert: {} };
+
           var collectionName;
           // POSTデータをJSON化
           var query = querystring.parse(data);
@@ -110,8 +138,8 @@ var WaoPageFactory = function() {
             callback(null, null);
           } else {
             for (var colName in me.crudData.insert) {
-              db.collection(colName, function(err, collection) {
-                collection.insert(me.crudData.insert[colName], function() {
+              me.db.collection(colName, function(err, collection) {
+                collection.insert(me.crudData.insert[colName], {w:1}, function() {
                   console.log('WaoPage.postData() : Success to insert a new data.');
                   console.log(me.crudData.insert[colName]);
                   console.log('');
@@ -133,14 +161,10 @@ var WaoPageFactory = function() {
     getData : function(request, callback) {
       if (request.method == 'GET') {
         var me = this;
-        if (!me.crudData) me.crudData = { find : {}, insert: {} };
-        if (!me.findData) me.findData = {}; // TODO:初期化の場所を考えなくては。。。
         var url_parts = url.parse(request.url, true);
-        me.crudData.find = url_parts.query;
-
         var collectionName;
         // GETパラメタ
-        var query = me.crudData.find;
+        var query = url_parts.query;
         // GETパラメタをmongoDBの検索条件に指定できるJSON形式に変換
         for (var key in query) {
           // ?collactionName.propertyName=xxxx
@@ -155,14 +179,14 @@ var WaoPageFactory = function() {
           callback(null, null);
         } else {
           for (var colName in me.crudData.find) {
-            db.collection(colName, function(err, collection) {
-              collection.find(me.crudData.find[colName], {limit:1}).toArray(function(err, docs) {
+            me.db.collection(colName, function(err, collection) {
+              collection.findOne(me.crudData.find[colName], function(err, item) {
                 console.log('WaoPage.getData() : Success to find data[s].');
                 console.log('  colName = "' + colName + '"');
                 console.log(me.crudData.find[colName]);
-                console.log(docs);
+                console.log(item);
                 console.log('');
-                me.findData[colName] = docs[0];
+                me.findData[colName] = item;
                 colCount++;
                 if (colCount == maxColCount) {
                   callback(null, null);
@@ -188,10 +212,13 @@ var WaoPageFactory = function() {
       return filepath;
     },
     // テンプレートを選択する処理
-    readTemplate : function(request, callback) {
+    readTemplate : function(appdir, request, callback) {
       var me = this;
       var filepath = this.getFilePathByURL(request.url);
-      fs.readFile(conf.basepath + filepath, 'utf8', function(err, data){
+      me.db.close();
+      console.log('Success to close db connection.');
+      console.log();
+      fs.readFile(conf.basepath + '/' + appdir + filepath, 'utf8', function(err, data){
         if (err) {
           console.log('WaoPage.readTemplate() : Faild to load this template.');
           console.log('  filepath = ' + filepath);
