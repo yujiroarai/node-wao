@@ -80,7 +80,7 @@ var WaoAppFactory = function() {
 }
 
 var waoApp = WaoAppFactory();
-waoApp.createHttpServer('myapp', 8765);
+waoApp.createHttpServer(conf.waoApp.appName, conf.waoApp.port);
 
 var WaoPageFactory = function() {
   var responseData,

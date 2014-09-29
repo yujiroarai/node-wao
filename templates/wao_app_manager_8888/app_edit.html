@@ -1,0 +1,60 @@
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="bootstrap/css/style.css">
+    <title>WAOアプリケーションの新規作成</title>
+  </head>
+  <body role="document">
+    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="/index.html">WAO</a>
+        </div>
+      </div>
+    </div>
+    <div class="container theme-showcase" role="main">
+      <div class="jumbotron">
+        <h1>アプリ新規作成</h1>
+        <p>簡単みんなのスケジュール調整ツール。 今日も効率よくスケジュールを決めましょう。</p>
+      </div>
+      <form role="form" action="schedule/newEvent/create.html" method="post">
+        <div class="col-md-4">
+          <div class="form-group">
+            <label for="event">WEBアプリケーション名称</label>&nbsp;
+            <span class="label label-danger">必須</span><br>
+            <small>※ 通販サイト、アンケートフォームなど</small>
+            <input type="text" class="form-control" name="wao_app.name" placeholder="WEBアプリ名を入力してください" />
+          </div>
+          <div class="form-group">
+            <label for="event">アプリID</label>&nbsp;
+            <span class="label label-danger">必須</span><br>
+            <small>※ ec_site, surveyなど</small>
+            <input class="form-control" name="wao_app.id" placeholder="WEBアプリIDを入力してください" rows="10" />
+          </div>
+          <div class="form-group">
+            <label for="event">ポート番号</label>&nbsp;
+            <span class="label label-danger">必須</span><br>
+            <small>※ 8888, 8765など</small>
+            <input class="form-control" name="wao_app.port" placeholder="ポート番号を入力してください" rows="10" />
+          </div>
+        </div>
+        <div class="col-md-4">
+        </div>
+        <div class="col-md-4">
+        </div>
+        <div class="col-md-12">
+          <button class="btn btn-success btn-lg col-md-8 col-md-offset-2 col-xs-8 col-xs-offset-2">WEBアプリを新規作成</button>
+        </div>
+      </form>
+    </div>
+    <footer class="bs-docs-footer" role="contentinfo">
+      <div class="container">
+        <p>headwaters inc.</p>
+      </div>
+    </footer>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
+  </body>
+</html>

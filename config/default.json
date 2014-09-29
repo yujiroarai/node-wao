@@ -1,3 +1,7 @@
 {
-  "basepath": "./templates"
+  "basepath": "./templates",
+  "waoApp": {
+    "port": 8765,
+    "appName": "myapp"
+  }
 }
