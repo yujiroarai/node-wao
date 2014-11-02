@@ -112,7 +112,7 @@ var WaoPageFactory = function() {
       if (url_parts.query.hasOwnProperty('_FILE.path')) {
         // ディレクトリの情報を取得
         WaoPageFactory().readDirRecursive('./templates/' + url_parts.query['_FILE.path'], function(fileList) {
-          that.findData._file = fileList;
+          that.findData._FILE = fileList;
           dbconnect();
         });
       } else {
