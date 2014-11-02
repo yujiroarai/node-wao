@@ -317,6 +317,11 @@ var WaoPageFactory = function() {
           $(this).attr('href', me.bindGetParam($(this).attr('href'), 0, false));
         }
       });
+      $dom.find('form').each(function(){
+        if ($(this).attr('action') != null) {
+          $(this).attr('action', me.bindGetParam($(this).attr('action'), 0, false));
+        }
+      });
       // data-wao-bind属性にバインド（innerHtml）
       $dom.find('[data-wao-bind]').each(function(){
         var val = $(this).attr('data-wao-bind');
@@ -360,7 +365,14 @@ var WaoPageFactory = function() {
         for (var i = 0; i < me.findData[col].length; i++) {
           // GETパラメタにバインド
           appendedTag.find('a').each(function(){
-            $(this).attr('href', me.bindGetParam($(this).attr('href'), i, true));
+            if ($(this).attr('href') != null) {
+              $(this).attr('href', me.bindGetParam($(this).attr('href'), i, true));
+            }
+          });
+          appendedTag.find('form').each(function(){
+            if ($(this).attr('action') != null) {
+              $(this).attr('action', me.bindGetParam($(this).attr('action'), i, true));
+            }
           });
           // data-wao-bind属性にバインド（innerHtml）
           appendedTag.find('[data-wao-bind]').each(function(){
