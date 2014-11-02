@@ -56,8 +56,19 @@ var WaoAppFactory = function() {
                 var mimeType = waoPage.getMimeType();
                 if (status == 200) {
                   console.log('Start response. statusCode=' + status + ', mimeType="' + mimeType + '"');
-                  response.writeHead(status, { 'Content-Type': mimeType });
-                  response.end(waoPage.getResponseData());
+                  if (mimeType == 'image/png') {
+                    console.log();
+                    var path = waoPage.getLocalFilePath();
+                    var stat = fs.statSync(path);
+                    response.writeHead(200, {
+                      'Content-Type' : mimeType,
+                      'Content-Length': stat.size
+                    });
+                    fs.createReadStream(path).pipe(response);
+                  } else {
+                    response.writeHead(status, { 'Content-Type': mimeType });
+                    response.end(waoPage.getResponseData());
+                  }
                 } else if (status == 301) {
                   var redirectUrl = 'http://localhost:' + myWaoApp.port + waoPage.getRedirectUrl(); // TODO：ホスト名とか
                   console.log('Start response. statusCode=' + status + ', Location="' + redirectUrl + '"');
@@ -91,6 +102,7 @@ var WaoPageFactory = function() {
     mimeType,
     redirectUrl,
     statusCode,
+    localFilePath,
     db,
     crudData;
   return {
@@ -273,39 +285,48 @@ var WaoPageFactory = function() {
       me.db.close();
       console.log('Success to close db connection.');
       console.log();
-      fs.readFile(conf.basepath + '/' + appdir + filepath, 'utf8', function(err, data){
-        if (err) {
-          console.log('WaoPage.readTemplate() : Faild to load this template.');
-          console.log('  filepath = ' + filepath);
-          console.log('');
-          me.statusCode = 404;
-        } else {
-          console.log('WaoPage.readTemplate() : Success to load this template.');
-          console.log('  filepath = ' + filepath);
-          console.log('');
-          me.statusCode = 200;
-          me.mimeType = mime.lookup(filepath);
-          me.responseData = data;
-          if (me.mimeType == "text/html") {
-            // <meta http-equiv="refresh">の指定があればサーバー側で301リダイレクトする
-            var $dom = $(data); // TODO：<!DOCTYPE>に対応できてない ＆ parseできない時の処理が必要
-            var $redirect = $dom.find('meta[http-equiv=refresh]');
-            if ($redirect) {
-              var contextMatch = ($redirect.attr('content') + "").match(/^[0-9]+;[ ]+URL=(.*)$/);
-              if (contextMatch) {
-                // TODO：URLの組み立てがすげー中途半端
-                var basepath = request.url.match(/^(.*\/)[^\/]+\.html$/)[1];
-                var target = contextMatch[1].replace('./',''); // TODO：これがヤバい
-                me.statusCode = 301;
-                me.redirectUrl = basepath + me.bindGetParam(target, 0, false);
-              } else {
-                me.bind();
+      var path = conf.basepath + '/' + appdir + filepath;
+      me.mimeType = mime.lookup(filepath);
+      if (me.mimeType == 'image/png') {
+        me.statusCode = 200;
+        me.responseData = null;
+        me.localFilePath = path;
+        callback(null, null);
+      } else {
+        fs.readFile(conf.basepath + '/' + appdir + filepath, 'utf8', function(err, data){
+          if (err) {
+            console.log('WaoPage.readTemplate() : Faild to load this template.');
+            console.log('  filepath = ' + filepath);
+            console.log('');
+            me.statusCode = 404;
+          } else {
+            console.log('WaoPage.readTemplate() : Success to load this template.');
+            console.log('  filepath = ' + filepath);
+            console.log('');
+            me.statusCode = 200;
+            me.responseData = data;
+            me.localFilePath = null;
+            if (me.mimeType == "text/html") {
+              // <meta http-equiv="refresh">の指定があればサーバー側で301リダイレクトする
+              var $dom = $(data); // TODO：<!DOCTYPE>に対応できてない ＆ parseできない時の処理が必要
+              var $redirect = $dom.find('meta[http-equiv=refresh]');
+              if ($redirect) {
+                var contextMatch = ($redirect.attr('content') + "").match(/^[0-9]+;[ ]+URL=(.*)$/);
+                if (contextMatch) {
+                  // TODO：URLの組み立てがすげー中途半端
+                  var basepath = request.url.match(/^(.*\/)[^\/]+\.html$/)[1];
+                  var target = contextMatch[1].replace('./',''); // TODO：これがヤバい
+                  me.statusCode = 301;
+                  me.redirectUrl = basepath + me.bindGetParam(target, 0, false);
+                } else {
+                  me.bind();
+                }
               }
             }
           }
-        }
-        callback(null, null);
-      });
+          callback(null, null);
+        });
+      }
     },
     // データバインド処理
     bind : function() {
@@ -464,6 +485,10 @@ var WaoPageFactory = function() {
     // リダイレクト先URLを返却する
     getRedirectUrl : function() {
       return this.redirectUrl;
+    },
+    // リソースのローカル上のパスを返却する
+    getLocalFilePath : function() {
+      return this.localFilePath;
     },
     // ディレクトリを再帰的に読み込んで配列で返す
     readDirRecursive : function(dir, callback) {
