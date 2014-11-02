@@ -88,10 +88,12 @@ var WaoPageFactory = function() {
     redirectUrl,
     statusCode,
     db,
-    crudData;
+    crudData,
+    waoAppData;
   return {
     init : function(dbname, callback) {
       this.crudData = { find : {}, insert: {} };
+      this.waoAppData = { start : [] };
       this.findData = {};
       // データベースへの接続
       // TODO：何でもかんでもつなぎにいっちゃうバカなやつ
@@ -122,14 +124,35 @@ var WaoPageFactory = function() {
           for (var key in query) {
             // <input name="collactionName.propertyName">
             collectionName = key.match(/^([^.]+)\./)[1]; // TODO：collectionの決定方法がアホ
-            if (!me.crudData.insert[collectionName]) {
-              var createdDate = new Date().getTime();
-              me.crudData.insert[collectionName] = {
-                id: (createdDate + Math.random() + '').replace('.', ''),
-                _createdDate: createdDate
-              };
+            if (collectionName == '_APP') {
+              // アプリ起動オプション
+              switch (query[key]){
+                case 'start()':
+                  me.waoAppData.start.push(key.replace(collectionName + '.', ''));
+                  break;
+                default :
+                  break;
+              }
+            } else {
+              if (!me.crudData.insert[collectionName]) {
+                var createdDate = new Date().getTime();
+                me.crudData.insert[collectionName] = {
+                  id: (createdDate + Math.random() + '').replace('.', ''),
+                  _createdDate: createdDat
+                }
+              }
+              me.crudData.insert[collectionName][key.replace(collectionName + '.', '')] = query[key];
             }
-            me.crudData.insert[collectionName][key.replace(collectionName + '.', '')] = query[key];
+          }
+          // アプリケーション起動
+          if (Object.keys(me.waoAppData.start).length > 0) {
+            for (var index in me.waoAppData.start) {
+              var appProp = me.waoAppData.start[index].split(':');
+              if (appProp[0] != 'undefined' && appProp[1] != 'undefined') {
+                var waoApp = WaoAppFactory();
+                waoApp.createHttpServer(appProp[0], appProp[1]);
+              }
+            }
           }
           // mongoDBにデータを登録
           var colCount = 0;
