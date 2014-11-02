@@ -349,8 +349,8 @@ var WaoPageFactory = function() {
             $(this).html(me.getValue(col, prop, i));
             $(this).removeAttr('data-wao-bind');
           });
-          if (i + 1 < me.findData[col].length){
-            appendedTag = iteratorTag.appendTo($(this).parent());
+          if (i + 1 < me.findData[col].length) {
+            appendedTag = iteratorTag.clone().appendTo($(this).parent());
           }
         }
         $(this).removeAttr('data-wao-iterator');
