@@ -450,7 +450,8 @@ var WaoPageFactory = function() {
     // レスポンス出力処理
     getResponseData : function() {
       // TODO DOCTYPEが無いとCSSが崩れることがあるので・・・ここも暫定対策
-      return '<!DOCTYPE html>\n' + this.responseData;
+      var doctype = (this.getMimeType() == 'text/html') ? '<!DOCTYPE html>\n' : '';
+      return doctype + this.responseData;
     },
     // HTTPステータスコードを返却する
     getStatusCode : function() {
