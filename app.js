@@ -2,7 +2,6 @@
 var http = require('http'),
   conf = require('config'),
   url = require('url'),
-  util = require('util'),
   path = require('path'),
   querystring = require('querystring'),
   fs = require('fs'),
