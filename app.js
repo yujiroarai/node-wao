@@ -336,13 +336,13 @@ var WaoPageFactory = function() {
       });
 
       // 属性のバインド（data-wao-bind-foobar="col.prop"）
-      var bindAttrList = $dom.html().match(/(data-wao-bind-.*)=/g); // まずは属性を抜き出す
+      var bindAttrList = $dom.html().match(/data-wao-bind-[^=]+/g); // まずは属性を抜き出す
       if (bindAttrList != null) {
         bindAttrList = bindAttrList.filter(function (x, i, self) { // 重複データは削除
           return self.indexOf(x) === i;
         });
         for (var idx in bindAttrList) {
-          var bindAttr = bindAttrList[idx].replace('=', ''); // 残念ながら抜き出した属性は=が付いたままなので削除
+          var bindAttr = bindAttrList[idx];
           console.log('data bind process for attribute : attribute_name = ' + bindAttr);
           $dom.find('[' + bindAttr + ']').each(function(){
             var val = $(this).attr(bindAttr);
@@ -351,7 +351,7 @@ var WaoPageFactory = function() {
             // data-wao-iteratorに指定されている場合、除外する
             if ($(this).closest('[data-wao-iterator="'+ col + '"]').length == 0) {
               $(this).attr(bindAttr.replace('data-wao-bind-',''), me.getValue(col, prop, 0));
-              $(this).removeAttr('data-wao-bind');
+              $(this).removeAttr(bindAttr);
             }
           });
         }
