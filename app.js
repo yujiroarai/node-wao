@@ -79,6 +79,7 @@ var WaoAppFactory = function() {
   };
 }
 
+var waoApps = [];
 var waoApp = WaoAppFactory();
 waoApp.createHttpServer(conf.waoApp.appName, conf.waoApp.port);
 
@@ -138,7 +139,7 @@ var WaoPageFactory = function() {
                 var createdDate = new Date().getTime();
                 me.crudData.insert[collectionName] = {
                   id: (createdDate + Math.random() + '').replace('.', ''),
-                  _createdDate: createdDat
+                  _createdDate: createdDate
                 }
               }
               me.crudData.insert[collectionName][key.replace(collectionName + '.', '')] = query[key];
