@@ -76,11 +76,13 @@ var WaoAppFactory = function() {
         });
       });
       s.listen(port);
+      listenPorts.push(port);
       return s;
     }
   };
 }
 
+var listenPorts = [];
 var waoApp = WaoAppFactory();
 waoApp.createHttpServer(conf.waoApp.appName, conf.waoApp.port);
 
@@ -139,14 +141,31 @@ var WaoPageFactory = function() {
           for (var key in query) {
             // <input name="collactionName.propertyName">
             collectionName = key.match(/^([^.]+)\./)[1]; // TODO：collectionの決定方法がアホ
-            if (!me.crudData.insert[collectionName]) {
-              var createdDate = new Date().getTime();
-              me.crudData.insert[collectionName] = {
-                id: (createdDate + Math.random() + '').replace('.', ''),
-                _createdDate: createdDate
-              };
+            if (collectionName == '_APP') {
+              // アプリ起動オプション
+              switch (query[key]){
+                case 'start()':
+                  var appProp = key.replace(collectionName + '.', '').split(':');
+                  if (appProp[0] != 'undefined' && appProp[1] != 'undefined') {
+                    if ($.inArray(appProp[1], listenPorts) < 0) {
+                      var waoApp = WaoAppFactory();
+                      waoApp.createHttpServer(appProp[0], appProp[1]);
+                    }
+                  }
+                  break;
+                default :
+                  break;
+              }
+            } else {
+              if (!me.crudData.insert[collectionName]) {
+                var createdDate = new Date().getTime();
+                me.crudData.insert[collectionName] = {
+                  id: (createdDate + Math.random() + '').replace('.', ''),
+                  _createdDate: createdDate
+                }
+              }
+              me.crudData.insert[collectionName][key.replace(collectionName + '.', '')] = query[key];
             }
-            me.crudData.insert[collectionName][key.replace(collectionName + '.', '')] = query[key];
           }
           // mongoDBにデータを登録
           var colCount = 0;
@@ -184,10 +203,17 @@ var WaoPageFactory = function() {
         var query = url_parts.query;
         // GETパラメタをmongoDBの検索条件に指定できるJSON形式に変換
         for (var key in query) {
-          // ?collactionName.propertyName=xxxx
-          collectionName = key.match(/^([^.]+)\./)[1]; // TODO：collectionの決定方法がアホ
-          if (!me.crudData.find[collectionName]) me.crudData.find[collectionName] = {};
-          me.crudData.find[collectionName][key.replace(collectionName + '.', '')] = query[key];
+          if (key.match(/^([^.]+)\./)) {
+            // ?collactionName.propertyName=xxxx
+            collectionName = key.match(/^([^.]+)\./)[1]; // TODO：collectionの決定方法がアホ
+            if (!me.crudData.find[collectionName]) me.crudData.find[collectionName] = {};
+            me.crudData.find[collectionName][key.replace(collectionName + '.', '')] = query[key];
+          } else {
+            // ?collactionName=all
+            // 検索条件なし
+            collectionName = key;
+            if (!me.crudData.find[collectionName]) me.crudData.find[collectionName] = {};
+          }
         }
         // mongoDBからデータを取得
         var colCount = 0;
@@ -197,13 +223,18 @@ var WaoPageFactory = function() {
         } else {
           for (var colName in me.crudData.find) {
             me.db.collection(colName, function(err, collection) {
-              collection.findOne(me.crudData.find[colName], function(err, item) {
+              var findColName = colName;
+              collection.find(me.crudData.find[colName]).toArray(function(err, docs) {
                 console.log('WaoPage.getData() : Success to find data[s].');
-                console.log('  colName = "' + colName + '"');
+                console.log('  findColName = "' + findColName + '"');
                 console.log(me.crudData.find[colName]);
-                console.log(item);
+                console.log('  count=' + docs.length);
+                me.findData[findColName] = [];
+                for (var i = 0; i < docs.length; i++) {
+                  console.log(docs[i]);
+                  me.findData[findColName][i] = docs[i];
+                }
                 console.log('');
-                me.findData[colName] = item;
                 colCount++;
                 if (colCount == maxColCount) {
                   callback(null, null);
@@ -259,7 +290,7 @@ var WaoPageFactory = function() {
                 var basepath = request.url.match(/^(.*\/)[^\/]+\.html$/)[1];
                 var target = contextMatch[1].replace('./',''); // TODO：これがヤバい
                 me.statusCode = 301;
-                me.redirectUrl = basepath + me.bindGetParam(target);
+                me.redirectUrl = basepath + me.bindGetParam(target, 0, false);
               } else {
                 me.bind();
               }
@@ -275,19 +306,53 @@ var WaoPageFactory = function() {
       var me = this;
       // GETパラメタにバインド
       $dom.find('a').each(function(){
-        $(this).attr('href', me.bindGetParam($(this).attr('href')));
+        if ($(this).attr('href') != null) {
+          $(this).attr('href', me.bindGetParam($(this).attr('href'), 0, false));
+        }
       });
       // data-wao-bind属性にバインド（innerHtml）
       $dom.find('[data-wao-bind]').each(function(){
         var val = $(this).attr('data-wao-bind');
-        $(this).html(me.getValue(val.split('.')[0], val.split('.')[1]));
-        $(this).removeAttr('data-wao-bind');
+        var col = val.split('.')[0];
+        var prop = val.split('.')[1];
+        // data-wao-iteratorに指定されている場合、除外する
+        if ($dom.find('[data-wao-iterator="'+ col + '"]').length == 0) {
+          // TODO:属性に対応
+          $(this).html(me.getValue(col, prop, 0));
+          $(this).removeAttr('data-wao-bind');
+        }
       });
+
+      // data-wao-iterator配下のbind処理
+      $dom.find('[data-wao-iterator]').each(function(){
+        var col = $(this).attr('data-wao-iterator');
+        var iteratorTag = $(this).clone();
+        var appendedTag = $(this);
+        for (var i = 0; i < me.findData[col].length; i++) {
+          // GETパラメタにバインド
+          appendedTag.find('a').each(function(){
+            $(this).attr('href', me.bindGetParam($(this).attr('href'), i, true));
+          });
+          // data-wao-bind属性にバインド（innerHtml）
+          appendedTag.find('[data-wao-bind]').each(function(){
+            var val = $(this).attr('data-wao-bind');
+            var col = val.split('.')[0];
+            var prop = val.split('.')[1];
+            // TODO:属性に対応
+            $(this).html(me.getValue(col, prop, i));
+            $(this).removeAttr('data-wao-bind');
+          });
+          if (i + 1 < me.findData[col].length){
+            appendedTag = iteratorTag.appendTo($(this).parent());
+          }
+        }
+        $(this).removeAttr('data-wao-iterator');
+    　　});
       // TODO:each(function(){})を使ってるから同期が必要じゃ？？？
       this.responseData = $dom.selfHtml();
     },
     // URLに指定されたGETパラメタにデータをバインドする処理
-    bindGetParam : function(target) {
+    bindGetParam : function(target, index, isIterator) {
       // ?hoge=hoge&hoge=hoge....部分を抜き出す
       var getparam = target.match(/\?([^=]+=([^&]*)?&?)*/);
       var getparamR = '';
@@ -296,28 +361,42 @@ var WaoPageFactory = function() {
         getparam = getparam[0].replace(/^\?/,'').split('&'); // hoge=hogeに分割して配列化
         for (var i in getparam) {
           var paramName = getparam[i].split('=')[0];
-          var trg = {
-            collectionName: paramName.split('.')[0],
-            propertyName: paramName.split('.')[1]
-          };
-          var val = this.getValue(trg.collectionName, trg.propertyName);
-          getparamR += paramName + '=' + val + '&';
+          var paramValue = getparam[i].split('=')[1];
+          // 既にbindされている場合は、対象外とする
+          if (paramValue.trim() == '') {
+            var trg = {
+              collectionName: paramName.split('.')[0],
+              propertyName: paramName.split('.')[1]
+            };
+            // data-wao-iteratorに指定されている場合、除外する
+            var val = '';
+            if (!isIterator) {
+              if (this.findData[trg.collectionName] && this.findData[trg.collectionName].length == 1) {
+                val = this.getValue(trg.collectionName, trg.propertyName, index);
+              }
+            } else {
+              val = this.getValue(trg.collectionName, trg.propertyName, index);
+            }
+            getparamR += paramName + '=' + val + '&';
+          } else {
+            getparamR += paramName + '=' + paramValue + '&';
+          }
         }
         getparamR = getparamR.slice(0, -1);
       }
       return target.replace(/\?([^=]+=([^&]*)?&?)*/, '') + getparamR;
     },
     // 参照文字列から自動的に適切なオブジェクトを選択して、参照文字列に対応するデータを返却する
-    getValue : function(col, prop) {
+    getValue : function(col, prop, index) {
       // TODO：_DBとか_SESって修飾子がついていたら・・・的な処理が今後必要
       var val = '（データが見つかりません）';
       var key = 'undefined';
       if (this.crudData.insert[col] && this.crudData.insert[col][prop]) {
         key = '_DB.' + col + '.' + prop;
         val = this.crudData.insert[col][prop];
-      } else if (this.findData[col] && this.findData[col][prop]) {
+      } else if (this.findData[col] && this.findData[col][index] && this.findData[col][index][prop]) {
         key = '_DB.' + col + '.' + prop;
-        val = this.findData[col][prop];
+        val = this.findData[col][index][prop];
       }
       console.log('getValue() : ' + key + '=' + val);
       return val;
