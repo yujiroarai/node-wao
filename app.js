@@ -258,7 +258,9 @@ var WaoPageFactory = function() {
       var me = this;
       // GETパラメタにバインド
       $dom.find('a').each(function(){
-        $(this).attr('href', me.bindGetParam($(this).attr('href')));
+        if ($(this).attr('href') != null) {
+          $(this).attr('href', me.bindGetParam($(this).attr('href')));
+        }
       });
       // data-wao-bind属性にバインド（innerHtml）
       $dom.find('[data-wao-bind]').each(function(){
