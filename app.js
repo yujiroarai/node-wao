@@ -74,11 +74,13 @@ var WaoAppFactory = function() {
         });
       });
       s.listen(port);
+      listenPorts.push(port);
       return s;
     }
   };
 }
 
+var listenPorts = [];
 var waoApp = WaoAppFactory();
 waoApp.createHttpServer(conf.waoApp.appName, conf.waoApp.port);
 
@@ -122,14 +124,31 @@ var WaoPageFactory = function() {
           for (var key in query) {
             // <input name="collactionName.propertyName">
             collectionName = key.match(/^([^.]+)\./)[1]; // TODO：collectionの決定方法がアホ
-            if (!me.crudData.insert[collectionName]) {
-              var createdDate = new Date().getTime();
-              me.crudData.insert[collectionName] = {
-                id: (createdDate + Math.random() + '').replace('.', ''),
-                _createdDate: createdDate
-              };
+            if (collectionName == '_APP') {
+              // アプリ起動オプション
+              switch (query[key]){
+                case 'start()':
+                  var appProp = key.replace(collectionName + '.', '').split(':');
+                  if (appProp[0] != 'undefined' && appProp[1] != 'undefined') {
+                    if ($.inArray(appProp[1], listenPorts) < 0) {
+                      var waoApp = WaoAppFactory();
+                      waoApp.createHttpServer(appProp[0], appProp[1]);
+                    }
+                  }
+                  break;
+                default :
+                  break;
+              }
+            } else {
+              if (!me.crudData.insert[collectionName]) {
+                var createdDate = new Date().getTime();
+                me.crudData.insert[collectionName] = {
+                  id: (createdDate + Math.random() + '').replace('.', ''),
+                  _createdDate: createdDate
+                }
+              }
+              me.crudData.insert[collectionName][key.replace(collectionName + '.', '')] = query[key];
             }
-            me.crudData.insert[collectionName][key.replace(collectionName + '.', '')] = query[key];
           }
           // mongoDBにデータを登録
           var colCount = 0;
@@ -320,6 +339,6 @@ var WaoPageFactory = function() {
     // リダイレクト先URLを返却する
     getRedirectUrl : function() {
       return this.redirectUrl;
-    },
+    }
   };
 };
