@@ -222,25 +222,32 @@ var WaoPageFactory = function() {
           callback(null, null);
         } else {
           for (var colName in me.crudData.find) {
-            me.db.collection(colName, function(err, collection) {
-              var findColName = colName;
-              collection.find(me.crudData.find[colName]).toArray(function(err, docs) {
-                console.log('WaoPage.getData() : Success to find data[s].');
-                console.log('  findColName = "' + findColName + '"');
-                console.log(me.crudData.find[colName]);
-                console.log('  count=' + docs.length);
-                me.findData[findColName] = [];
-                for (var i = 0; i < docs.length; i++) {
-                  console.log(docs[i]);
-                  me.findData[findColName][i] = docs[i];
-                }
-                console.log('');
-                colCount++;
-                if (colCount == maxColCount) {
-                  callback(null, null);
-                }
+            if (colName == '_FILE') {
+              colCount++;
+              if (colCount == maxColCount) {
+                callback(null, null);
+              }
+            } else {
+              me.db.collection(colName, function(err, collection) {
+                var findColName = colName;
+                collection.find(me.crudData.find[colName]).toArray(function(err, docs) {
+                  console.log('WaoPage.getData() : Success to find data[s].');
+                  console.log('  findColName = "' + findColName + '"');
+                  console.log(me.crudData.find[colName]);
+                  console.log('  count=' + docs.length);
+                  me.findData[findColName] = [];
+                  for (var i = 0; i < docs.length; i++) {
+                    console.log(docs[i]);
+                    me.findData[findColName][i] = docs[i];
+                  }
+                  console.log('');
+                  colCount++;
+                  if (colCount == maxColCount) {
+                    callback(null, null);
+                  }
+                });
               });
-            });
+            }
           }
         }
       } else {
@@ -391,12 +398,17 @@ var WaoPageFactory = function() {
       // TODO：_DBとか_SESって修飾子がついていたら・・・的な処理が今後必要
       var val = '（データが見つかりません）';
       var key = 'undefined';
-      if (this.crudData.insert[col] && this.crudData.insert[col][prop]) {
-        key = '_DB.' + col + '.' + prop;
-        val = this.crudData.insert[col][prop];
-      } else if (this.findData[col] && this.findData[col][index] && this.findData[col][index][prop]) {
-        key = '_DB.' + col + '.' + prop;
-        val = this.findData[col][index][prop];
+      if (col == '_FILE') {
+          key = '_FILE';
+          val = JSON.stringify(this.findData[col]);
+      } else {
+        if (this.crudData.insert[col] && this.crudData.insert[col][prop]) {
+          key = '_DB.' + col + '.' + prop;
+          val = this.crudData.insert[col][prop];
+        } else if (this.findData[col] && this.findData[col][index] && this.findData[col][index][prop]) {
+          key = '_DB.' + col + '.' + prop;
+          val = this.findData[col][index][prop];
+        }
       }
       console.log('getValue() : ' + key + '=' + val);
       return val;
