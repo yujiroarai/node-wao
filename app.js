@@ -74,12 +74,13 @@ var WaoAppFactory = function() {
         });
       });
       s.listen(port);
+      listenPorts.push(port);
       return s;
     }
   };
 }
 
-var waoApps = [];
+var listenPorts = [];
 var waoApp = WaoAppFactory();
 waoApp.createHttpServer(conf.waoApp.appName, conf.waoApp.port);
 
@@ -89,12 +90,10 @@ var WaoPageFactory = function() {
     redirectUrl,
     statusCode,
     db,
-    crudData,
-    waoAppData;
+    crudData;
   return {
     init : function(dbname, callback) {
       this.crudData = { find : {}, insert: {} };
-      this.waoAppData = { start : [] };
       this.findData = {};
       // データベースへの接続
       // TODO：何でもかんでもつなぎにいっちゃうバカなやつ
@@ -129,7 +128,13 @@ var WaoPageFactory = function() {
               // アプリ起動オプション
               switch (query[key]){
                 case 'start()':
-                  me.waoAppData.start.push(key.replace(collectionName + '.', ''));
+                  var appProp = key.replace(collectionName + '.', '').split(':');
+                  if (appProp[0] != 'undefined' && appProp[1] != 'undefined') {
+                    if ($.inArray(appProp[1], listenPorts) < 0) {
+                      var waoApp = WaoAppFactory();
+                      waoApp.createHttpServer(appProp[0], appProp[1]);
+                    }
+                  }
                   break;
                 default :
                   break;
@@ -143,16 +148,6 @@ var WaoPageFactory = function() {
                 }
               }
               me.crudData.insert[collectionName][key.replace(collectionName + '.', '')] = query[key];
-            }
-          }
-          // アプリケーション起動
-          if (Object.keys(me.waoAppData.start).length > 0) {
-            for (var index in me.waoAppData.start) {
-              var appProp = me.waoAppData.start[index].split(':');
-              if (appProp[0] != 'undefined' && appProp[1] != 'undefined') {
-                var waoApp = WaoAppFactory();
-                waoApp.createHttpServer(appProp[0], appProp[1]);
-              }
             }
           }
           // mongoDBにデータを登録
@@ -344,6 +339,6 @@ var WaoPageFactory = function() {
     // リダイレクト先URLを返却する
     getRedirectUrl : function() {
       return this.redirectUrl;
-    },
+    }
   };
 };
