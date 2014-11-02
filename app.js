@@ -2,6 +2,7 @@
 var http = require('http'),
   conf = require('config'),
   url = require('url'),
+  path = require('path'),
   querystring = require('querystring'),
   fs = require('fs'),
   mime = require('mime'),
@@ -36,7 +37,8 @@ var WaoAppFactory = function() {
         console.log('  URL="' + request.url + '", method="' + request.method + '"');
         console.log('');
         var waoPage = WaoPageFactory();
-        waoPage.init(myWaoApp.dbname, function(err, data) {
+
+        waoPage.init(myWaoApp.dbname, request.url, function(err, data) {
           // methodで処理を切り分け
           // PUTメソッド・・・データの変更
           // DELETEメソッド・・・データの削除
@@ -69,7 +71,7 @@ var WaoAppFactory = function() {
                 console.log('------------------------------');
                 console.log('');
               });
-            })
+            });
           });
         });
       });
@@ -92,17 +94,32 @@ var WaoPageFactory = function() {
     db,
     crudData;
   return {
-    init : function(dbname, callback) {
+    init : function(dbname, request_url, callback) {
+      var url_parts = url.parse(request_url, true);
       this.crudData = { find : {}, insert: {} };
       this.findData = {};
+      var that = this;
+
       // データベースへの接続
-      // TODO：何でもかんでもつなぎにいっちゃうバカなやつ
-      var mongoServer = new mongo.Server('localhost', mongo.Connection.DEFAULT_PORT, {});
-      this.db = new mongo.Db(dbname, mongoServer, {});
-      this.db.open(function(err, db) {
-        console.log('Success to open db connection. dbname=' + dbname);
-        callback(null, null);
-      });
+      var dbconnect = function() {
+
+        // TODO：何でもかんでもつなぎにいっちゃうバカなやつ
+        var mongoServer = new mongo.Server('localhost', mongo.Connection.DEFAULT_PORT, {});
+        that.db = new mongo.Db(dbname, mongoServer, {});
+        that.db.open(function(err, db) {
+          console.log('Success to open db connection. dbname=' + dbname);
+          callback(null, null);
+        });
+      };
+      if (url_parts.query.hasOwnProperty('_FILE.path')) {
+        // ディレクトリの情報を取得
+        WaoPageFactory().readDirRecursive('./templates/' + url_parts.query['_FILE.path'], function(fileList) {
+          that.findData._FILE = fileList;
+          dbconnect();
+        });
+      } else {
+        dbconnect();
+      }
     },
     // POSTメソッドの処理（データの追加）
     // TODO：リファラからテンプレートを選択してフォームの整合性をチェックする処理を追加する
@@ -205,25 +222,32 @@ var WaoPageFactory = function() {
           callback(null, null);
         } else {
           for (var colName in me.crudData.find) {
-            me.db.collection(colName, function(err, collection) {
-              var findColName = colName;
-              collection.find(me.crudData.find[colName]).toArray(function(err, docs) {
-                console.log('WaoPage.getData() : Success to find data[s].');
-                console.log('  findColName = "' + findColName + '"');
-                console.log(me.crudData.find[colName]);
-                console.log('  count=' + docs.length);
-                me.findData[findColName] = [];
-                for (var i = 0; i < docs.length; i++) {
-                  console.log(docs[i]);
-                  me.findData[findColName][i] = docs[i];
-                }
-                console.log('');
-                colCount++;
-                if (colCount == maxColCount) {
-                  callback(null, null);
-                }
+            if (colName == '_FILE') {
+              colCount++;
+              if (colCount == maxColCount) {
+                callback(null, null);
+              }
+            } else {
+              me.db.collection(colName, function(err, collection) {
+                var findColName = colName;
+                collection.find(me.crudData.find[colName]).toArray(function(err, docs) {
+                  console.log('WaoPage.getData() : Success to find data[s].');
+                  console.log('  findColName = "' + findColName + '"');
+                  console.log(me.crudData.find[colName]);
+                  console.log('  count=' + docs.length);
+                  me.findData[findColName] = [];
+                  for (var i = 0; i < docs.length; i++) {
+                    console.log(docs[i]);
+                    me.findData[findColName][i] = docs[i];
+                  }
+                  console.log('');
+                  colCount++;
+                  if (colCount == maxColCount) {
+                    callback(null, null);
+                  }
+                });
               });
-            });
+            }
           }
         }
       } else {
@@ -396,12 +420,17 @@ var WaoPageFactory = function() {
       // TODO：_DBとか_SESって修飾子がついていたら・・・的な処理が今後必要
       var val = '（データが見つかりません）';
       var key = 'undefined';
-      if (this.crudData.insert[col] && this.crudData.insert[col][prop]) {
-        key = '_DB.' + col + '.' + prop;
-        val = this.crudData.insert[col][prop];
-      } else if (this.findData[col] && this.findData[col][index] && this.findData[col][index][prop]) {
-        key = '_DB.' + col + '.' + prop;
-        val = this.findData[col][index][prop];
+      if (col == '_FILE') {
+          key = '_FILE';
+          val = JSON.stringify(this.findData[col]);
+      } else {
+        if (this.crudData.insert[col] && this.crudData.insert[col][prop]) {
+          key = '_DB.' + col + '.' + prop;
+          val = this.crudData.insert[col][prop];
+        } else if (this.findData[col] && this.findData[col][index] && this.findData[col][index][prop]) {
+          key = '_DB.' + col + '.' + prop;
+          val = this.findData[col][index][prop];
+        }
       }
       console.log('getValue() : ' + key + '=' + val);
       return val;
@@ -422,6 +451,54 @@ var WaoPageFactory = function() {
     // リダイレクト先URLを返却する
     getRedirectUrl : function() {
       return this.redirectUrl;
+    },
+    // ディレクトリを再帰的に読み込んで配列で返す
+    readDirRecursive : function(dir, callback) {
+      var walk = function(p, callback) {
+        var results = [];
+        fs.readdir(p, function (err, files) {
+          if (err) callback(err, []);
+
+          var pending = files.length;
+          if (!pending) return callback(null, results);
+
+          files.map(function (file) {
+            return path.join(p, file);
+          })
+          .filter(function (file) {
+            if(fs.statSync(file).isDirectory()) {
+              walk(file, function(err, res) {
+                var stat = fs.statSync(file);
+                results.push({
+                  name: path.basename(file),
+                  files:res,
+                  type: 'directory',
+                  time: stat.mtime
+                });
+                if (!--pending) {
+                  callback(null, results);
+                }
+              });
+            }
+            return fs.statSync(file).isFile();
+          })
+          .forEach(function (file) {
+            var stat = fs.statSync(file);
+            results.push({
+              name: path.basename(file),
+              type: 'file',
+              time: stat.mtime,
+              mime: mime.lookup(path.basename(file))
+            });
+            if (!--pending) callback(null, results);
+          });
+        });
+      };
+
+      walk(dir, function(err, results) {
+        if (err) console.log('err: ' + err);
+        callback({ file_list: results });
+      });
     }
   };
 };
