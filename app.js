@@ -323,12 +323,34 @@ var WaoPageFactory = function() {
         var col = val.split('.')[0];
         var prop = val.split('.')[1];
         // data-wao-iteratorに指定されている場合、除外する
-        if ($dom.find('[data-wao-iterator="'+ col + '"]').length == 0) {
+        if ($(this).closest('[data-wao-iterator="'+ col + '"]').length == 0) {
           // TODO:属性に対応
           $(this).html(me.getValue(col, prop, 0));
           $(this).removeAttr('data-wao-bind');
         }
       });
+
+      // 属性のバインド（data-wao-bind-foobar="col.prop"）
+      var bindAttrList = $dom.html().match(/(data-wao-bind-.*)=/g); // まずは属性を抜き出す
+      if (bindAttrList != null) {
+        bindAttrList = bindAttrList.filter(function (x, i, self) { // 重複データは削除
+          return self.indexOf(x) === i;
+        });
+        for (var idx in bindAttrList) {
+          var bindAttr = bindAttrList[idx].replace('=', ''); // 残念ながら抜き出した属性は=が付いたままなので削除
+          console.log('data bind process for attribute : attribute_name = ' + bindAttr);
+          $dom.find('[' + bindAttr + ']').each(function(){
+            var val = $(this).attr(bindAttr);
+            var col = val.split('.')[0];
+            var prop = val.split('.')[1];
+            // data-wao-iteratorに指定されている場合、除外する
+            if ($(this).closest('[data-wao-iterator="'+ col + '"]').length == 0) {
+              $(this).attr(bindAttr.replace('data-wao-bind-',''), me.getValue(col, prop, 0));
+              $(this).removeAttr('data-wao-bind');
+            }
+          });
+        }
+      }
 
       // data-wao-iterator配下のbind処理
       $dom.find('[data-wao-iterator]').each(function(){
@@ -354,7 +376,7 @@ var WaoPageFactory = function() {
           }
         }
         $(this).removeAttr('data-wao-iterator');
-    　　});
+      });
       // TODO:each(function(){})を使ってるから同期が必要じゃ？？？
       this.responseData = $dom.selfHtml();
     },
@@ -415,7 +437,8 @@ var WaoPageFactory = function() {
     },
     // レスポンス出力処理
     getResponseData : function() {
-      return this.responseData;
+      // TODO DOCTYPEが無いとCSSが崩れることがあるので・・・ここも暫定対策
+      return '<!DOCTYPE html>\n' + this.responseData;
     },
     // HTTPステータスコードを返却する
     getStatusCode : function() {
