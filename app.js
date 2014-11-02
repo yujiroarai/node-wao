@@ -361,6 +361,8 @@ var WaoPageFactory = function() {
               val = this.getValue(trg.collectionName, trg.propertyName, index);
             }
             getparamR += paramName + '=' + val + '&';
+          } else {
+            getparamR += paramName + '=' + paramValue + '&';
           }
         }
         getparamR = getparamR.slice(0, -1);
