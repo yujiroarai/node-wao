@@ -56,8 +56,19 @@ var WaoAppFactory = function() {
                 var mimeType = waoPage.getMimeType();
                 if (status == 200) {
                   console.log('Start response. statusCode=' + status + ', mimeType="' + mimeType + '"');
-                  response.writeHead(status, { 'Content-Type': mimeType });
-                  response.end(waoPage.getResponseData());
+                  if (mimeType == 'image/png') {
+                    console.log();
+                    var path = waoPage.getLocalFilePath();
+                    var stat = fs.statSync(path);
+                    response.writeHead(200, {
+                      'Content-Type' : mimeType,
+                      'Content-Length': stat.size
+                    });
+                    fs.createReadStream(path).pipe(response);
+                  } else {
+                    response.writeHead(status, { 'Content-Type': mimeType });
+                    response.end(waoPage.getResponseData());
+                  }
                 } else if (status == 301) {
                   var redirectUrl = 'http://localhost:' + myWaoApp.port + waoPage.getRedirectUrl(); // TODO：ホスト名とか
                   console.log('Start response. statusCode=' + status + ', Location="' + redirectUrl + '"');
@@ -91,6 +102,7 @@ var WaoPageFactory = function() {
     mimeType,
     redirectUrl,
     statusCode,
+    localFilePath,
     db,
     crudData;
   return {
@@ -195,63 +207,60 @@ var WaoPageFactory = function() {
     // GETメソッドあるいはクエリストリングの処理（データの取得）
     // TODO：postData()ともう少し共通化できると思う
     getData : function(request, callback) {
-      if (request.method == 'GET') {
-        var me = this;
-        var url_parts = url.parse(request.url, true);
-        var collectionName;
-        // GETパラメタ
-        var query = url_parts.query;
-        // GETパラメタをmongoDBの検索条件に指定できるJSON形式に変換
-        for (var key in query) {
-          if (key.match(/^([^.]+)\./)) {
-            // ?collactionName.propertyName=xxxx
-            collectionName = key.match(/^([^.]+)\./)[1]; // TODO：collectionの決定方法がアホ
-            if (!me.crudData.find[collectionName]) me.crudData.find[collectionName] = {};
-            me.crudData.find[collectionName][key.replace(collectionName + '.', '')] = query[key];
-          } else {
-            // ?collactionName=all
-            // 検索条件なし
-            collectionName = key;
-            if (!me.crudData.find[collectionName]) me.crudData.find[collectionName] = {};
-          }
-        }
-        // mongoDBからデータを取得
-        var colCount = 0;
-        var maxColCount = Object.keys(me.crudData.find).length;
-        if (maxColCount == 0) {
-          callback(null, null);
+      // GETメソッドじゃなくてもクエリストリングの解析処理を行う
+      var me = this;
+      var url_parts = url.parse(request.url, true);
+      var collectionName;
+      // GETパラメタ
+      var query = url_parts.query;
+      // GETパラメタをmongoDBの検索条件に指定できるJSON形式に変換
+      for (var key in query) {
+        if (key.match(/^([^.]+)\./)) {
+          // ?collactionName.propertyName=xxxx
+          collectionName = key.match(/^([^.]+)\./)[1]; // TODO：collectionの決定方法がアホ
+          if (!me.crudData.find[collectionName]) me.crudData.find[collectionName] = {};
+          me.crudData.find[collectionName][key.replace(collectionName + '.', '')] = query[key];
         } else {
-          for (var colName in me.crudData.find) {
-            if (colName == '_FILE') {
-              colCount++;
-              if (colCount == maxColCount) {
-                callback(null, null);
-              }
-            } else {
-              me.db.collection(colName, function(err, collection) {
-                var findColName = colName;
-                collection.find(me.crudData.find[colName]).toArray(function(err, docs) {
-                  console.log('WaoPage.getData() : Success to find data[s].');
-                  console.log('  findColName = "' + findColName + '"');
-                  console.log(me.crudData.find[colName]);
-                  console.log('  count=' + docs.length);
-                  me.findData[findColName] = [];
-                  for (var i = 0; i < docs.length; i++) {
-                    console.log(docs[i]);
-                    me.findData[findColName][i] = docs[i];
-                  }
-                  console.log('');
-                  colCount++;
-                  if (colCount == maxColCount) {
-                    callback(null, null);
-                  }
-                });
-              });
+          // ?collactionName=all
+          // 検索条件なし
+          collectionName = key;
+          if (!me.crudData.find[collectionName]) me.crudData.find[collectionName] = {};
+        }
+      }
+      // mongoDBからデータを取得
+      var colCount = 0;
+      var maxColCount = Object.keys(me.crudData.find).length;
+      if (maxColCount == 0) {
+        callback(null, null);
+      } else {
+        for (var colName in me.crudData.find) {
+          if (colName == '_FILE') {
+            colCount++;
+            if (colCount == maxColCount) {
+              callback(null, null);
             }
+          } else {
+            me.db.collection(colName, function(err, collection) {
+              var findColName = colName;
+              collection.find(me.crudData.find[colName]).toArray(function(err, docs) {
+                console.log('WaoPage.getData() : Success to find data[s].');
+                console.log('  findColName = "' + findColName + '"');
+                console.log(me.crudData.find[colName]);
+                console.log('  count=' + docs.length);
+                me.findData[findColName] = [];
+                for (var i = 0; i < docs.length; i++) {
+                  console.log(docs[i]);
+                  me.findData[findColName][i] = docs[i];
+                }
+                console.log('');
+                colCount++;
+                if (colCount == maxColCount) {
+                  callback(null, null);
+                }
+              });
+            });
           }
         }
-      } else {
-        callback(null, null);
       }
     },
     // URLルーティングの処理
@@ -273,39 +282,48 @@ var WaoPageFactory = function() {
       me.db.close();
       console.log('Success to close db connection.');
       console.log();
-      fs.readFile(conf.basepath + '/' + appdir + filepath, 'utf8', function(err, data){
-        if (err) {
-          console.log('WaoPage.readTemplate() : Faild to load this template.');
-          console.log('  filepath = ' + filepath);
-          console.log('');
-          me.statusCode = 404;
-        } else {
-          console.log('WaoPage.readTemplate() : Success to load this template.');
-          console.log('  filepath = ' + filepath);
-          console.log('');
-          me.statusCode = 200;
-          me.mimeType = mime.lookup(filepath);
-          me.responseData = data;
-          if (me.mimeType == "text/html") {
-            // <meta http-equiv="refresh">の指定があればサーバー側で301リダイレクトする
-            var $dom = $(data); // TODO：<!DOCTYPE>に対応できてない ＆ parseできない時の処理が必要
-            var $redirect = $dom.find('meta[http-equiv=refresh]');
-            if ($redirect) {
-              var contextMatch = ($redirect.attr('content') + "").match(/^[0-9]+;[ ]+URL=(.*)$/);
-              if (contextMatch) {
-                // TODO：URLの組み立てがすげー中途半端
-                var basepath = request.url.match(/^(.*\/)[^\/]+\.html$/)[1];
-                var target = contextMatch[1].replace('./',''); // TODO：これがヤバい
-                me.statusCode = 301;
-                me.redirectUrl = basepath + me.bindGetParam(target, 0, false);
-              } else {
-                me.bind();
+      var path = conf.basepath + '/' + appdir + filepath;
+      me.mimeType = mime.lookup(filepath);
+      if (me.mimeType == 'image/png') {
+        me.statusCode = 200;
+        me.responseData = null;
+        me.localFilePath = path;
+        callback(null, null);
+      } else {
+        fs.readFile(conf.basepath + '/' + appdir + filepath, 'utf8', function(err, data){
+          if (err) {
+            console.log('WaoPage.readTemplate() : Faild to load this template.');
+            console.log('  filepath = ' + filepath);
+            console.log('');
+            me.statusCode = 404;
+          } else {
+            console.log('WaoPage.readTemplate() : Success to load this template.');
+            console.log('  filepath = ' + filepath);
+            console.log('');
+            me.statusCode = 200;
+            me.responseData = data;
+            me.localFilePath = null;
+            if (me.mimeType == "text/html") {
+              // <meta http-equiv="refresh">の指定があればサーバー側で301リダイレクトする
+              var $dom = $(data); // TODO：<!DOCTYPE>に対応できてない ＆ parseできない時の処理が必要
+              var $redirect = $dom.find('meta[http-equiv=refresh]');
+              if ($redirect) {
+                var contextMatch = ($redirect.attr('content') + "").match(/^[0-9]+;[ ]+URL=(.*)$/);
+                if (contextMatch) {
+                  // TODO：URLの組み立てがすげー中途半端
+                  var basepath = request.url.match(/^(.*\/)[^\/]+\.html$/)[1];
+                  var target = contextMatch[1].replace('./',''); // TODO：これがヤバい
+                  me.statusCode = 301;
+                  me.redirectUrl = basepath + me.bindGetParam(target, 0, false);
+                } else {
+                  me.bind();
+                }
               }
             }
           }
-        }
-        callback(null, null);
-      });
+          callback(null, null);
+        });
+      }
     },
     // データバインド処理
     bind : function() {
@@ -315,6 +333,11 @@ var WaoPageFactory = function() {
       $dom.find('a').each(function(){
         if ($(this).attr('href') != null) {
           $(this).attr('href', me.bindGetParam($(this).attr('href'), 0, false));
+        }
+      });
+      $dom.find('form').each(function(){
+        if ($(this).attr('action') != null) {
+          $(this).attr('action', me.bindGetParam($(this).attr('action'), 0, false));
         }
       });
       // data-wao-bind属性にバインド（innerHtml）
@@ -331,14 +354,14 @@ var WaoPageFactory = function() {
       });
 
       // 属性のバインド（data-wao-bind-foobar="col.prop"）
-      var bindAttrList = $dom.html().match(/(data-wao-bind-.*)=/g); // まずは属性を抜き出す
+      var bindAttrList = $dom.html().match(/data-wao-bind-[^=]+/g); // まずは属性を抜き出す
       if (bindAttrList != null) {
         bindAttrList = bindAttrList.filter(function (x, i, self) { // 重複データは削除
           return self.indexOf(x) === i;
         });
         for (var idx in bindAttrList) {
-          var bindAttr = bindAttrList[idx].replace('=', ''); // 残念ながら抜き出した属性は=が付いたままなので削除
-          console.log('data bind process for attribute : attribute_name = ' + bindAttr);
+          var bindAttr = bindAttrList[idx];
+          console.log('bind() : attribute_name=' + bindAttr);
           $dom.find('[' + bindAttr + ']').each(function(){
             var val = $(this).attr(bindAttr);
             var col = val.split('.')[0];
@@ -346,7 +369,7 @@ var WaoPageFactory = function() {
             // data-wao-iteratorに指定されている場合、除外する
             if ($(this).closest('[data-wao-iterator="'+ col + '"]').length == 0) {
               $(this).attr(bindAttr.replace('data-wao-bind-',''), me.getValue(col, prop, 0));
-              $(this).removeAttr('data-wao-bind');
+              $(this).removeAttr(bindAttr);
             }
           });
         }
@@ -360,7 +383,14 @@ var WaoPageFactory = function() {
         for (var i = 0; i < me.findData[col].length; i++) {
           // GETパラメタにバインド
           appendedTag.find('a').each(function(){
-            $(this).attr('href', me.bindGetParam($(this).attr('href'), i, true));
+            if ($(this).attr('href') != null) {
+              $(this).attr('href', me.bindGetParam($(this).attr('href'), i, true));
+            }
+          });
+          appendedTag.find('form').each(function(){
+            if ($(this).attr('action') != null) {
+              $(this).attr('action', me.bindGetParam($(this).attr('action'), i, true));
+            }
           });
           // data-wao-bind属性にバインド（innerHtml）
           appendedTag.find('[data-wao-bind]').each(function(){
@@ -427,12 +457,12 @@ var WaoPageFactory = function() {
           key = '_FILE';
           val = JSON.stringify(this.findData[col]);
       } else {
-        if (this.crudData.insert[col] && this.crudData.insert[col][prop]) {
-          key = '_DB.' + col + '.' + prop;
-          val = this.crudData.insert[col][prop];
-        } else if (this.findData[col] && this.findData[col][index] && this.findData[col][index][prop]) {
+        if (this.findData[col] && this.findData[col][index] && this.findData[col][index][prop]) {
           key = '_DB.' + col + '.' + prop;
           val = this.findData[col][index][prop];
+        } else if (this.crudData.insert[col] && this.crudData.insert[col][prop]) {
+          key = '_DB.' + col + '.' + prop;
+          val = this.crudData.insert[col][prop];
         }
       }
       console.log('getValue() : ' + key + '=' + val);
@@ -441,7 +471,8 @@ var WaoPageFactory = function() {
     // レスポンス出力処理
     getResponseData : function() {
       // TODO DOCTYPEが無いとCSSが崩れることがあるので・・・ここも暫定対策
-      return '<!DOCTYPE html>\n' + this.responseData;
+      var doctype = (this.getMimeType() == 'text/html') ? '<!DOCTYPE html>\n' : '';
+      return doctype + this.responseData;
     },
     // HTTPステータスコードを返却する
     getStatusCode : function() {
@@ -454,6 +485,10 @@ var WaoPageFactory = function() {
     // リダイレクト先URLを返却する
     getRedirectUrl : function() {
       return this.redirectUrl;
+    },
+    // リソースのローカル上のパスを返却する
+    getLocalFilePath : function() {
+      return this.localFilePath;
     },
     // ディレクトリを再帰的に読み込んで配列で返す
     readDirRecursive : function(dir, callback) {
