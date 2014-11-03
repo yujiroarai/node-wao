@@ -403,6 +403,9 @@ var WaoPageFactory = function() {
               if (this.findData[trg.collectionName] && this.findData[trg.collectionName].length == 1) {
                 val = this.getValue(trg.collectionName, trg.propertyName, index);
               }
+              if (this.crudData.insert[trg.collectionName]) {
+                val = this.getValue(trg.collectionName, trg.propertyName, index);
+              }
             } else {
               val = this.getValue(trg.collectionName, trg.propertyName, index);
             }
