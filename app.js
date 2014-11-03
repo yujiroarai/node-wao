@@ -454,12 +454,12 @@ var WaoPageFactory = function() {
           key = '_FILE';
           val = JSON.stringify(this.findData[col]);
       } else {
-        if (this.crudData.insert[col] && this.crudData.insert[col][prop]) {
-          key = '_DB.' + col + '.' + prop;
-          val = this.crudData.insert[col][prop];
-        } else if (this.findData[col] && this.findData[col][index] && this.findData[col][index][prop]) {
+        if (this.findData[col] && this.findData[col][index] && this.findData[col][index][prop]) {
           key = '_DB.' + col + '.' + prop;
           val = this.findData[col][index][prop];
+        } else if (this.crudData.insert[col] && this.crudData.insert[col][prop]) {
+          key = '_DB.' + col + '.' + prop;
+          val = this.crudData.insert[col][prop];
         }
       }
       console.log('getValue() : ' + key + '=' + val);
