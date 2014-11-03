@@ -8,6 +8,7 @@ var http = require('http'),
   mime = require('mime'),
   jsdom = require("jsdom"),
   $ = require("jquery")(jsdom.jsdom().createWindow()),
+  multiparty = require('multiparty'),
   mongo = require('mongodb');
 
 // jQueryの拡張
@@ -139,6 +140,9 @@ var WaoPageFactory = function() {
           var query = querystring.parse(data);
           // JSON化したPOSTデータをmongoDBに入れられるJSON形式に変換
           for (var key in query) {
+            if (key.indexOf('.') < 0) continue;
+            console.log(key);
+            console.log('.ある');
             // <input name="collactionName.propertyName">
             collectionName = key.match(/^([^.]+)\./)[1]; // TODO：collectionの決定方法がアホ
             if (collectionName == '_APP') {
@@ -186,6 +190,26 @@ var WaoPageFactory = function() {
                 });
               });
             }
+          }
+
+          if(query.hasOwnProperty('_FILE.file') && query.hasOwnProperty('_FILE.path')) {
+            var app_zip = query['_FILE.file'];
+            var path = query['_FILE.path'];
+            // zipを解凍
+            var form = new multiparty.Form();
+            form.parse(request, function(err, fields, data){
+              console.log('--------------------------------6');
+              console.log(err, fields, data);
+              console.log('--------------------------------9');
+              // exec('rm -rf ./templates/' + data['_FILE.file'][0].path, function(err, stdout){
+              //   console.log('keshita');
+              //   if (err) console.log(stdout);
+              //   // FIXME コマンドじゃなくてnodeでやりたいよね
+              //   exec('unzip ' + data['_FILE.file'][0].path + ' -d ./templates/' + path.basename(data['_FILE.file'][0].path), function(err, stdout){
+              //     console.log(stdout);
+              //   });
+              // });
+            });
           }
         });
       } else {
