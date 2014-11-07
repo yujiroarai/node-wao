@@ -378,22 +378,25 @@ var WaoPageFactory = function() {
       // data-wao-iterator配下のbind処理
       $dom.find('[data-wao-iterator]').each(function(){
         var col = $(this).attr('data-wao-iterator');
-        var iteratorTag = $(this).clone();
-        var appendedTag = $(this);
+        var $template = $(this).clone();
+        var $myTag = $(this).parent();
+        $(this).remove();
         for (var i = 0; i < me.findData[col].length; i++) {
+          var $temporary = $template.clone();
+          console.log($temporary.html());
           // GETパラメタにバインド
-          appendedTag.find('a').each(function(){
+          $temporary.find('a').each(function(){
             if ($(this).attr('href') != null) {
               $(this).attr('href', me.bindGetParam($(this).attr('href'), i, true));
             }
           });
-          appendedTag.find('form').each(function(){
+          $temporary.find('form').each(function(){
             if ($(this).attr('action') != null) {
               $(this).attr('action', me.bindGetParam($(this).attr('action'), i, true));
             }
           });
           // data-wao-bind属性にバインド（innerHtml）
-          appendedTag.find('[data-wao-bind]').each(function(){
+          $temporary.find('[data-wao-bind]').each(function(){
             var val = $(this).attr('data-wao-bind');
             var col = val.split('.')[0];
             var prop = val.split('.')[1];
@@ -401,11 +404,27 @@ var WaoPageFactory = function() {
             $(this).html(me.getValue(col, prop, i));
             $(this).removeAttr('data-wao-bind');
           });
-          if (i + 1 < me.findData[col].length) {
-            appendedTag = iteratorTag.clone().appendTo($(this).parent());
+          // 属性のバインド（data-wao-bind-foobar="col.prop"）
+          var bindAttrList = $temporary.html().match(/data-wao-bind-[^=]+/g); // まずは属性を抜き出す
+          if (bindAttrList != null) {
+            bindAttrList = bindAttrList.filter(function (x, i, self) { // 重複データは削除
+              return self.indexOf(x) === i;
+            });
+            for (var idx in bindAttrList) {
+              var bindAttr = bindAttrList[idx];
+              console.log('bind() :   attribute_name=' + bindAttr);
+              $temporary.find('[' + bindAttr + ']').each(function(){
+                var val = $(this).attr(bindAttr);
+                var col = val.split('.')[0];
+                var prop = val.split('.')[1];
+                $(this).attr(bindAttr.replace('data-wao-bind-',''), me.getValue(col, prop, i));
+                $(this).removeAttr(bindAttr);
+              });
+            }
           }
+          // bind後のタグを追加
+          $myTag.append($temporary);
         }
-        $(this).removeAttr('data-wao-iterator');
       });
       // TODO:each(function(){})を使ってるから同期が必要じゃ？？？
       this.responseData = $dom.selfHtml();
