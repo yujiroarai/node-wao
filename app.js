@@ -106,7 +106,7 @@ var WaoPageFactory = function() {
 
         // TODO：何でもかんでもつなぎにいっちゃうバカなやつ
         var mongoServer = new mongo.Server('localhost', mongo.Connection.DEFAULT_PORT, {});
-        that.db = new mongo.Db(dbname, mongoServer, {});
+        that.db = new mongo.Db(dbname, mongoServer, {safe: true});
         that.db.open(function(err, db) {
           console.log('Success to open db connection. dbname=' + dbname);
           callback(null, null);
