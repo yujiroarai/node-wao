@@ -57,14 +57,19 @@ var WaoAppFactory = function() {
                 if (status == 200) {
                   console.log('Start response. statusCode=' + status + ', mimeType="' + mimeType + '"');
                   if (mimeType == 'image/png') {
-                    console.log();
-                    var path = waoPage.getLocalFilePath();
-                    var stat = fs.statSync(path);
-                    response.writeHead(200, {
-                      'Content-Type' : mimeType,
-                      'Content-Length': stat.size
-                    });
-                    fs.createReadStream(path).pipe(response);
+                    try {
+                      var path = waoPage.getLocalFilePath();
+                      var stat = fs.statSync(path);
+                      response.writeHead(200, {
+                        'Content-Type' : mimeType,
+                        'Content-Length': stat.size
+                      });
+                      fs.createReadStream(path).pipe(response);
+                    } catch (e) {
+                      console.log('Start response. statusCode=404');
+                      response.statusCode = 404;
+                      response.end();
+                    }
                   } else {
                     response.writeHead(status, { 'Content-Type': mimeType });
                     response.end(waoPage.getResponseData());
@@ -381,6 +386,7 @@ var WaoPageFactory = function() {
         var $template = $(this).clone();
         var $myTag = $(this).parent();
         $(this).remove();
+        // TODO:findDataがあることが前提になっている
         for (var i = 0; i < me.findData[col].length; i++) {
           var $temporary = $template.clone();
           console.log($temporary.html());
@@ -447,6 +453,7 @@ var WaoPageFactory = function() {
               propertyName: paramName.split('.')[1]
             };
             // data-wao-iteratorに指定されている場合、除外する
+            // TODO:findDataがあることが前提になっている
             var val = '';
             if (!isIterator) {
               if (this.findData[trg.collectionName] && this.findData[trg.collectionName].length == 1) {
@@ -479,6 +486,9 @@ var WaoPageFactory = function() {
         if (this.findData[col] && this.findData[col][index] && this.findData[col][index][prop]) {
           key = '_DB.' + col + '.' + prop;
           val = this.findData[col][index][prop];
+        } else if (this.findData[col] && prop == 'length') {
+          key = '_DB.' + col + '.' + prop;
+          val = this.findData[col].length;
         } else if (this.crudData.insert[col] && this.crudData.insert[col][prop]) {
           key = '_DB.' + col + '.' + prop;
           val = this.crudData.insert[col][prop];
