@@ -10,12 +10,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "config": "1.1.0",
     "jquery": "^2.1.1",
     "jsdom": "^0.11.1",
+    "mime": "*",
     "mongodb": "^1.4.8",
     "mongoose": "^3.8.14",
-    "config": "1.1.0",
-    "mime": "*",
+    "multiparty": "^4.0.0",
     "querystring": "*"
   }
 }
