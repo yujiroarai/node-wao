@@ -8,7 +8,9 @@ var http = require('http'),
   mime = require('mime'),
   jsdom = require("jsdom"),
   $ = require("jquery")(jsdom.jsdom().createWindow()),
-  mongo = require('mongodb');
+  multiparty = require('multiparty'),
+  mongo = require('mongodb'),
+  exec = require('child_process').exec;
 
 // jQueryの拡張
 (function($) {
@@ -117,7 +119,7 @@ var WaoPageFactory = function() {
 
         // TODO：何でもかんでもつなぎにいっちゃうバカなやつ
         var mongoServer = new mongo.Server('localhost', mongo.Connection.DEFAULT_PORT, {});
-        that.db = new mongo.Db(dbname, mongoServer, {});
+        that.db = new mongo.Db(dbname, mongoServer, {safe: true});
         that.db.open(function(err, db) {
           console.log('Success to open db connection. dbname=' + dbname);
           callback(null, null);
@@ -141,6 +143,22 @@ var WaoPageFactory = function() {
       if (request.method == 'POST') {
         var me = this;
         var data = '';
+
+        if(request.headers['content-type'].indexOf('multipart/form-data') >= 0) {
+          var form = new multiparty.Form();
+          form.parse(request, function(err, fields, data) {
+            var templatePath = './templates/' + fields['_FILE.path'][0];
+            // console.log(templatePath);
+            var uploadedFilePath = data['_FILE.file'][0].path;
+            // console.log('uploadFilePath', uploadedFilePath);
+            exec('rm -rf ' + templatePath, function(err, stdout) {
+              exec('unzip ' + uploadedFilePath + ' -d ' + templatePath, function(err, stdout) {
+                console.log(stdout);
+              });
+            });
+          });
+        }
+
         request.on('data', function(chunk) {
           data += chunk;
         });
@@ -149,8 +167,12 @@ var WaoPageFactory = function() {
           var collectionName;
           // POSTデータをJSON化
           var query = querystring.parse(data);
+
           // JSON化したPOSTデータをmongoDBに入れられるJSON形式に変換
           for (var key in query) {
+            if (key.indexOf('.') < 0) continue;
+            // console.log(key);
+            // console.log('.ある');
             // <input name="collactionName.propertyName">
             collectionName = key.match(/^([^.]+)\./)[1]; // TODO：collectionの決定方法がアホ
             if (collectionName == '_APP') {
