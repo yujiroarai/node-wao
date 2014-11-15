@@ -45,7 +45,7 @@ var WaoAppFactory = function() {
           // PUTメソッド・・・データの変更
           // DELETEメソッド・・・データの削除
           // POSTメソッド・・・データの追加
-          waoPage.postData(request, function(err, data) {
+          waoPage.postData(request, response, function(err, data) {
             if (err) throw err;
             // GETメソッド・・・データの取得
             waoPage.getData(request, function(err, data) {
@@ -139,24 +139,27 @@ var WaoPageFactory = function() {
     // TODO：リファラからテンプレートを選択してフォームの整合性をチェックする処理を追加する
     // ・余計なフォームが送信されて来ていないか？
     // ・html5 form validationと同じ内容のサーバー側バリデーション処理
-    postData : function(request, callback) {
+    postData : function(request, response, callback) {
       if (request.method == 'POST') {
         var me = this;
         var data = '';
 
+        // ファイルアップロード処理
         if(request.headers['content-type'].indexOf('multipart/form-data') >= 0) {
           var form = new multiparty.Form();
           form.parse(request, function(err, fields, data) {
             var templatePath = './templates/' + fields['_FILE.path'][0];
-            // console.log(templatePath);
             var uploadedFilePath = data['_FILE.file'][0].path;
-            // console.log('uploadFilePath', uploadedFilePath);
             exec('rm -rf ' + templatePath, function(err, stdout) {
               exec('unzip ' + uploadedFilePath + ' -d ' + templatePath, function(err, stdout) {
                 console.log(stdout);
+                // 成功レスポンス
+                response.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+                response.end("{ code: 0 }");
               });
             });
           });
+          return;
         }
 
         request.on('data', function(chunk) {
@@ -167,13 +170,9 @@ var WaoPageFactory = function() {
           var collectionName;
           // POSTデータをJSON化
           var query = querystring.parse(data);
-
           // JSON化したPOSTデータをmongoDBに入れられるJSON形式に変換
           for (var key in query) {
             if (key.indexOf('.') < 0) continue;
-            // console.log(key);
-            // console.log('.ある');
-            // <input name="collactionName.propertyName">
             collectionName = key.match(/^([^.]+)\./)[1]; // TODO：collectionの決定方法がアホ
             if (collectionName == '_APP') {
               // アプリ起動オプション
