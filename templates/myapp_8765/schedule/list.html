@@ -1,0 +1,127 @@
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../bootstrap/css/style.css">
+    <title>出欠確認</title>
+  </head>
+  <body role="document">
+    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="../index.html">調整さんplus</a>
+        </div>
+      </div>
+    </div>
+    <div class="container" role="main">
+        <label style="font-size:120%;" for="event">111の出欠確認</label>
+        <small for="">回答数：0</small>
+        <hr>
+        <label for="event">メモ</label>
+        <p>忘年会</p>
+    </div>
+    <div class="bg-success ">
+      <div class="container" role="main">
+        <br>
+        <label for="event">日にち候補</label><br>
+        <small>※各自の出欠状況を変更するには名前のリンクをクリックしてください。</small>
+        <br><br>
+      </div>
+      <div class="table-responsive container">
+        <table class="table table-bordered" style="width: 700px;margin-left: auto;margin-right: auto;">
+          <thead>
+            <tr style="background: #f5f5f5;">
+              <th>日程</th>
+              <th>
+                ◯
+              </th>
+              <th>
+                △
+              </th>
+              <th>
+                ×
+              </th>
+            </tr>
+            <tr>
+              <th style="background: #f5f5f5;">
+                11/21(金) 19:00〜
+              </th>
+              <td>
+                0人
+              </td>
+              <td>
+                0人
+              </td>
+              <td>
+                0人
+              </td>
+            </tr>
+            <tr>
+              <th style="background: #f5f5f5;">
+                コメント
+              </th>
+              <td>
+              </td>
+              <td>
+              </td>
+              <td>
+              </td>
+            </tr>
+          </thead>
+        </table>
+        <br><br>
+        <button id="bt1" class="btn btn-success btn-lg col-md-8 col-md-offset-2 col-xs-8 col-xs-offset-2" onclick="change(this);location.href='#kosin';">出欠を入力する</button>
+      </div>
+      <br><br>
+      <!-- 出欠を入力する  -->
+      <div id="kosin" class="container" style="width:600px;display:none;">
+        <br>
+        <label style="font-size:120%;" for="event">出欠を入力する</label>
+        <hr class="color:#f9f2f4;">
+        <br>
+        <label for="event">表示名</label><br>
+        <small>個人が特定し得る内容は入力しないでください。</small>
+        <input type="text" class="form-control">
+        <br>
+        <label for="event">日にち候補</label><br>
+          <div>
+            <table class="choice" style="width:600px;">
+              <tbody>
+                <tr>
+                  <th nowrap="" ap="nowrap">11/21(金) 19:00〜</th>
+                  <td style="width: 250px;" class="btn-group" role="group" aria-label="...">
+                  <button type="button" name="btn1" class="btn btn-default" onmouseout="this.className='btn btn-default'" onmouseover="this.className='btn btn-success'">◯</button>
+                  <button type="button" name="btn2" class="btn btn-default" onmouseout="this.className='btn btn-default'" onmouseover="this.className='btn btn-success'">△</button>
+                  <button type="button" name="btn3" class="btn btn-default" onmouseout="this.className='btn btn-default'" onmouseover="this.className='btn btn-success'">×</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <br>
+          <label for="event">コメント</label><br>
+        <small>個人が特定し得る内容は入力しないでください。</small>
+        <input type="text" class="form-control">
+        <br><br>
+        <button id="kosinbt" class="btn btn-success btn-lg col-md-8 col-md-offset-2 col-xs-8 col-xs-offset-2">更新する</button>
+      </div>
+      </div>
+    <script src="../bootstrap/js/bootstrap.min.js"></script>
+    <script>
+      function change(obj){
+        document.getElementById('bt1').style.display = 'none';
+        document.getElementById('kosin').style.display='block';
+      }
+     $(function(){
+      for(var i=1;i<=3; i++){
+        $('.btn-group [name=btn'+ i +']').onclick(function(){
+          $('.btn-group [name=btn'+ i +']').style.attr('background-color: #5cb85c','border-color: #4cae4c');
+
+        });
+      }
+     });
+    </script>
+  </body>
+</html>
