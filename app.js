@@ -142,9 +142,11 @@ var WaoPageFactory = function() {
             exec('rm -rf ' + templatePath, function(err, stdout) {
               exec('unzip ' + uploadedFilePath + ' -d ' + templatePath, function(err, stdout) {
                 console.log(stdout);
+                callback(null, null);
               });
             });
           });
+          return;
         }
 
         request.on('data', function(chunk) {
@@ -155,13 +157,9 @@ var WaoPageFactory = function() {
           var collectionName;
           // POSTデータをJSON化
           var query = querystring.parse(data);
-
           // JSON化したPOSTデータをmongoDBに入れられるJSON形式に変換
           for (var key in query) {
             if (key.indexOf('.') < 0) continue;
-            // console.log(key);
-            // console.log('.ある');
-            // <input name="collactionName.propertyName">
             collectionName = key.match(/^([^.]+)\./)[1]; // TODO：collectionの決定方法がアホ
             if (collectionName == '_APP') {
               // アプリ起動オプション
