@@ -546,8 +546,10 @@ var WaoPageFactory = function() {
         var results = [];
         fs.readdir(p, function (err, files) {
           if (err) callback(err, []);
-
-          var pending = files.length;
+          var pending;
+          if (files) {
+            pending = files.length;
+          }
           if (!pending) return callback(null, results);
 
           files.map(function (file) {
@@ -585,7 +587,7 @@ var WaoPageFactory = function() {
 
       walk(dir, function(err, results) {
         if (err) console.log('err: ' + err);
-        callback({ file_list: results });
+        callback({ files: results });
       });
     }
   };
