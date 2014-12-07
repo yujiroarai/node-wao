@@ -16,11 +16,11 @@
       </div>
     </div>
     <div class="container" role="main">
-        <label style="font-size:120%;" for="event">111の出欠確認</label>
-        <small for="">回答数：0</small>
+        <label style="font-size:120%;" data-wao-bind="event.name">111</label>
+        <label style="font-size:120%;">の出欠確認</label>
         <hr>
-        <label for="event">メモ</label>
-        <p>忘年会</p>
+        <label>メモ</label>
+        <p data-wao-bind="event.memo">忘年会</p>
     </div>
     <div>
       <div class="container" role="main">
@@ -34,97 +34,34 @@
           <thead>
             <tr style="background: #f5f5f5;">
               <th>日程</th>
-              <th>
-                11/21(金) 19:00〜
+              <th data-wao-bind="event.date1">
+                11/21(水) 19:00〜
               </th>
-              <th>
-                11/22(金) 19:00〜
+              <th data-wao-bind="event.date2">
+                11/22(木) 19:00〜
               </th>
-              <th>
+              <th data-wao-bind="event.date3">
                 11/23(金) 19:00〜
               </th>
               <th>
                 コメント
               </th>
             </tr>
-            <tr>
-              <th style="background: #f5f5f5;">
-                ◯
+            <tr data-wao-iterator="schedule">
+              <th style="background: #f5f5f5;" data-wao-bind="schedule.name">
+                中村
               </th>
-              <td>
-                0人
-              </td>
-              <td>
-                0人
-              </td>
-              <td>
-                0人
-              </td>
-              <td>
-              </td>
-            </tr>
-            <tr>
-              <th style="background: #f5f5f5;">
-                △
-              </th>
-              <td>
-                0人
-              </td>
-              <td>
-                0人
-              </td>
-              <td>
-                0人
-              </td>
-              <td>
-              </td>
-            </tr>
-            <tr>
-              <th style="background: #f5f5f5;">
-                ×
-              </th>
-              <td>
-                0人
-              </td>
-              <td>
-                0人
-              </td>
-              <td>
-                0人
-              </td>
-              <td>
-              </td>
-            </tr>
-            <th style="background: #f5f5f5;">
-                あああ
-              </th>
-              <td>
+              <td data-wao-bind="schedule.date1">
                 ×
               </td>
-              <td>
+              <td data-wao-bind="schedule.date2">
                 △
               </td>
-              <td>
-                0人
+              <td data-wao-bind="schedule.date3">
+                ○
               </td>
-              <td>
-                ううう
-              </td>
-            </tr>
-            <th style="background: #f5f5f5;">
-                いいい
-              </th>
-              <td>
-                △
-              </td>
-              <td>
-                ◯
-              </td>
-              <td>
-                0人
-              </td>
-              <td>
-                おおお
+              <td data-wao-bind="schedule.comment">
+                たくさん飲みます
               </td>
             </tr>
           </thead>
@@ -134,39 +71,83 @@
       </div>
       <br><br>
       <!-- 出欠を入力する  -->
-      <div id="kosin" class="container" style="width:600px;display:none;">
-        <br>
-        <label style="font-size:120%;" for="event">出欠を入力する</label>
-        <hr class="color:#f9f2f4;">
-        <br>
-        <label for="event">表示名</label><br>
-        <small>個人が特定し得る内容は入力しないでください。</small>
-        <input type="text" class="form-control">
-        <br>
-        <label for="event">日にち候補</label><br>
-          <div>
-            <table class="choice" style="width:600px;">
-              <tbody>
-                <tr>
-                  <th nowrap="" ap="nowrap">11/21(金) 19:00〜</th>
-                  <td style="width: 250px;" class="btn-group" role="group" aria-label="...">
-                  <button type="button" name="btn1" class="btn btn-default" onmouseout="this.className='btn btn-default'" onmouseover="this.className='btn btn-success'">◯</button>
-                  <button type="button" name="btn2" class="btn btn-default" onmouseout="this.className='btn btn-default'" onmouseover="this.className='btn btn-success'">△</button>
-                  <button type="button" name="btn3" class="btn btn-default" onmouseout="this.className='btn btn-default'" onmouseover="this.className='btn btn-success'">×</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+      <form role="form" id="scheduleForm" action="../schedule/list.html?event.id=" method="post">
+        <input type="hidden" class="form-control" id="eventId" name="schedule.event_id" value="14165577666624453">
+        <div id="kosin" class="container" style="width:600px;display:none;">
           <br>
-          <label for="event">コメント</label><br>
-        <small>個人が特定し得る内容は入力しないでください。</small>
-        <input type="text" class="form-control">
-        <br><br>
-        <button id="kosinbt" class="btn btn-success btn-lg col-md-8 col-md-offset-2 col-xs-8 col-xs-offset-2">更新する</button>
+          <label style="font-size:120%;" for="event">出欠を入力する</label>
+          <hr class="color:#f9f2f4;">
+          <br>
+          <label for="event">表示名</label><br>
+          <small>個人が特定し得る内容は入力しないでください。</small>
+          <input type="text" class="form-control" name="schedule.name">
+          <br>
+          <label for="event">日にち候補</label><br>
+            <div>
+              <table class="choice" style="width:600px;">
+                <tbody>
+                  <tr>
+                    <th nowrap="" ap="nowrap" data-wao-bind="event.date1">11/21(水) 19:00〜</th>
+                    <td style="width: 250px;" class="btn-group" role="group" aria-label="...">
+                    <button type="button" name="btn1" class="btn btn-default" onmouseout="this.className='btn btn-default'" onmouseover="this.className='btn btn-success'">◯</button>
+                    <button type="button" name="btn2" class="btn btn-default" onmouseout="this.className='btn btn-default'" onmouseover="this.className='btn btn-success'">△</button>
+                    <button type="button" name="btn3" class="btn btn-default" onmouseout="this.className='btn btn-default'" onmouseover="this.className='btn btn-success'">×</button>
+                    </td>
+                    <input type="hidden" class="form-control" name="schedule.date1" value="○">
+                  </tr>
+                  <tr>
+                    <th nowrap="" ap="nowrap" data-wao-bind="event.date2">11/22(木) 19:00〜</th>
+                    <td style="width: 250px;" class="btn-group" role="group" aria-label="...">
+                    <button type="button" name="btn1" class="btn btn-default" onmouseout="this.className='btn btn-default'" onmouseover="this.className='btn btn-success'">◯</button>
+                    <button type="button" name="btn2" class="btn btn-default" onmouseout="this.className='btn btn-default'" onmouseover="this.className='btn btn-success'">△</button>
+                    <button type="button" name="btn3" class="btn btn-default" onmouseout="this.className='btn btn-default'" onmouseover="this.className='btn btn-success'">×</button>
+                    </td>
+                    <input type="hidden" class="form-control" name="schedule.date2" value="△">
+                  </tr>
+                  <tr>
+                    <th nowrap="" ap="nowrap" data-wao-bind="event.date3">11/23(金) 19:00〜</th>
+                    <td style="width: 250px;" class="btn-group" role="group" aria-label="...">
+                    <button type="button" name="btn1" class="btn btn-default" onmouseout="this.className='btn btn-default'" onmouseover="this.className='btn btn-success'">◯</button>
+                    <button type="button" name="btn2" class="btn btn-default" onmouseout="this.className='btn btn-default'" onmouseover="this.className='btn btn-success'">△</button>
+                    <button type="button" name="btn3" class="btn btn-default" onmouseout="this.className='btn btn-default'" onmouseover="this.className='btn btn-success'">×</button>
+                    </td>
+                    <input type="hidden" class="form-control" name="schedule.date3" value="×">
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <br>
+            <label for="event">コメント</label><br>
+          <small>個人が特定し得る内容は入力しないでください。</small>
+          <input type="text" class="form-control" name="schedule.comment">
+          <br><br>
+          <button id="kosinbt" class="btn btn-success btn-lg col-md-8 col-md-offset-2 col-xs-8 col-xs-offset-2">更新する</button>
+        </div>
+      </form>
       </div>
-      </div>
+    <script src="../js/jquery.min.js"></script>
     <script src="../bootstrap/js/bootstrap.min.js"></script>
+    <script>
+    $(document).ready(function(){
+      $('#scheduleForm').attr('action', $('#scheduleForm').attr('action') + '&schedule.event_id=' + getEventId());
+      $('#eventId').val(getEventId());
+    });
+ 
+    function getEventId() {
+        var url   = location.href;
+        parameters    = url.split("?");
+        params   = parameters[1].split("&");
+        var paramsArray = [];
+        for ( i = 0; i < params.length; i++ ) {
+            neet = params[i].split("=");
+            paramsArray.push(neet[0]);
+            paramsArray[neet[0]] = neet[1];
+        }
+        var eventId = paramsArray["event.id"];
+        return eventId;
+    }
+    </script>
+
     <script>
       function change(obj){
         document.getElementById('bt1').style.display = 'none';
@@ -174,9 +155,8 @@
       }
      $(function(){
       for(var i=1;i<=3; i++){
-        $('.btn-group [name=btn'+ i +']').onclick(function(){
+        $('.btn-group [name=btn'+ i +']').click(function(){
           $('.btn-group [name=btn'+ i +']').style.attr('background-color: #5cb85c','border-color: #4cae4c');
-
         });
       }
      });

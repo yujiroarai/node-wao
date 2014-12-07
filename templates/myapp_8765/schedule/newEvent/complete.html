@@ -36,13 +36,33 @@
           </tr>
         </tbody>
       </table>
-      <a href="../list.html?event.id=" class="btn btn-success btn-lg col-md-6 col-md-offset-3 col-xs-8 col-xs-offset-2">イベントページを表示</a>
+      <a href="../list.html?event.id=" id="detailLink" class="btn btn-success btn-lg col-md-6 col-md-offset-3 col-xs-8 col-xs-offset-2">イベントページを表示</a>
     </div>
     <footer class="bs-docs-footer" role="contentinfo">
       <div class="container">
         <p>headwaters inc.</p>
       </div>
     </footer>
+    <script src="../../js/jquery.min.js"></script>
     <script src="../../bootstrap/js/bootstrap.min.js"></script>
+    <script>
+    $(document).ready(function(){
+      $('#detailLink').attr('href', $('#detailLink').attr('href') + '&schedule.event_id=' + getEventId());
+    });
+ 
+    function getEventId() {
+        var url   = location.href;
+        parameters    = url.split("?");
+        params   = parameters[1].split("&");
+        var paramsArray = [];
+        for ( i = 0; i < params.length; i++ ) {
+            neet = params[i].split("=");
+            paramsArray.push(neet[0]);
+            paramsArray[neet[0]] = neet[1];
+        }
+        var eventId = paramsArray["event.id"];
+        return eventId;
+    }
+    </script>
   </body>
 </html>
