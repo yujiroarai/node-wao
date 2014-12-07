@@ -55,9 +55,12 @@
     });
  
     function getEventId() {
-        var url   = location.href;
-        parameters    = url.split("?");
-        params   = parameters[1].split("&");
+        var url = location.href;
+        parameters = url.split("?");
+        if (parameters.length <= 1) {
+          return "";
+        }
+        params = parameters[1].split("&");
         var paramsArray = [];
         for ( i = 0; i < params.length; i++ ) {
             neet = params[i].split("=");
