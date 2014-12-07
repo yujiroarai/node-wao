@@ -268,22 +268,29 @@ var WaoPageFactory = function() {
           } else {
             me.db.collection(colName, function(err, collection) {
               var findColName = colName;
-              collection.find(me.crudData.find[colName]).toArray(function(err, docs) {
-                console.log('WaoPage.getData() : Success to find data[s].');
-                console.log('  findColName = "' + findColName + '"');
-                console.log(me.crudData.find[colName]);
-                console.log('  count=' + docs.length);
-                me.findData[findColName] = [];
-                for (var i = 0; i < docs.length; i++) {
-                  console.log(docs[i]);
-                  me.findData[findColName][i] = docs[i];
-                }
-                console.log('');
-                colCount++;
-                if (colCount == maxColCount) {
-                  callback(null, null);
-                }
-              });
+              if (collection != undefined) {
+                collection.find(me.crudData.find[colName]).toArray(function(err, docs) {
+                  console.log('WaoPage.getData() : Success to find data[s].');
+                  console.log('  findColName = "' + findColName + '"');
+                  console.log('  docs = "' + docs + '"');
+                  console.log(me.crudData.find[colName]);
+                  var count = 0;
+                  if (docs != null) {
+                    count = docs.length;
+                  }
+                  console.log('  count=' + count);
+                  me.findData[findColName] = [];
+                  for (var i = 0; i < count; i++) {
+                    console.log(docs[i]);
+                    me.findData[findColName][i] = docs[i];
+                  }
+                  console.log('');
+                  colCount++;
+                  if (colCount == maxColCount) {
+                    callback(null, null);
+                  }
+                });
+              }
             });
           }
         }
