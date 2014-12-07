@@ -28,21 +28,48 @@
           </tr>
           <tr>
             <th>メモ</th>
-            <td data-wao-bind="event.memo">イベント名</td>
+            <td data-wao-bind="event.memo">メモ</td>
           </tr>
           <tr>
             <th>候補日程</th>
-            <td data-wao-bind="event.schedule">イベント名</td>
+            <td>
+              <span data-wao-bind="event.date1">8/7(月) 20:00～</span><br>
+              <span data-wao-bind="event.date2">8/8(火) 20:00～</span><br>
+              <span data-wao-bind="event.date3">8/9(水) 21:00～</span>
+            </td>
           </tr>
         </tbody>
       </table>
-      <a href="../list.html?event.id=" class="btn btn-success btn-lg col-md-6 col-md-offset-3 col-xs-8 col-xs-offset-2">イベントページを表示</a>
+      <a href="../list.html?event.id=" id="detailLink" class="btn btn-success btn-lg col-md-6 col-md-offset-3 col-xs-8 col-xs-offset-2">イベントページを表示</a>
     </div>
     <footer class="bs-docs-footer" role="contentinfo">
       <div class="container">
         <p>headwaters inc.</p>
       </div>
     </footer>
+    <script src="../../bootstrap/js/jquery-1.11.1.min.js"></script>
     <script src="../../bootstrap/js/bootstrap.min.js"></script>
+    <script>
+    $(document).ready(function(){
+      $('#detailLink').attr('href', $('#detailLink').attr('href') + '&schedule.event_id=' + getEventId());
+    });
+ 
+    function getEventId() {
+        var url = location.href;
+        parameters = url.split("?");
+        if (parameters.length <= 1) {
+          return "";
+        }
+        params = parameters[1].split("&");
+        var paramsArray = [];
+        for ( i = 0; i < params.length; i++ ) {
+            neet = params[i].split("=");
+            paramsArray.push(neet[0]);
+            paramsArray[neet[0]] = neet[1];
+        }
+        var eventId = paramsArray["event.id"];
+        return eventId;
+    }
+    </script>
   </body>
 </html>

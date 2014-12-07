@@ -47,15 +47,18 @@
               8/8(火) 20:00～<br>
               8/9(水) 21:00～
             </small>
-            <textarea class="form-control" name="event.schedule" placeholder="候補日程を複数入力する場合は改行して指定します" rows="10"></textarea>
+            <textarea id="schedule" class="form-control" placeholder="候補日程を複数入力する場合は改行して指定します" rows="10"></textarea>
           </div>
         </div>
         <div class="col-md-4">
           ここにはカレンダーによる候補日程選択UIが表示される予定です
         </div>
         <div class="col-md-12">
-          <button class="btn btn-success btn-lg col-md-8 col-md-offset-2 col-xs-8 col-xs-offset-2">イベントをつくる</button>
+          <button onclick="get();" class="btn btn-success btn-lg col-md-8 col-md-offset-2 col-xs-8 col-xs-offset-2">イベントをつくる</button>
         </div>
+        <input type="hidden" id="date1" name="event.date1">
+        <input type="hidden" id="date2" name="event.date2">
+        <input type="hidden" id="date3" name="event.date3">
       </form>
     </div>
     <footer class="bs-docs-footer" role="contentinfo">
@@ -64,11 +67,16 @@
       </div>
     </footer>
     <!-- ファイルアップロード確認用のフォーム -->
-    <form method="POST" enctype="multipart/form-data">
-      <input type="file" name="_FILE.file" />
-      <input type="hidden" name="_FILE.path" value="myapp_8765" />
-      <input type="submit" value="submit" />
-    </form>
-    <script src="bootstrap/js/bootstrap.min.js"></script>
+    <script src="bootstrap/js/jquery-1.11.1.min.js"></script>
+    <script src="bootstrap/js/bootstrap.js"></script>]
+    <script>
+      function get(){
+        var obj = $('#schedule').val().split(/\n|\r/);
+        $('#date1').val(obj[0]);
+        $('#date2').val(obj[1]);
+        $('#date3').val(obj[2]);
+      }
+    </script>
   </body>
 </html>
+
