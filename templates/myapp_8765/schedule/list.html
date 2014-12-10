@@ -96,22 +96,7 @@
                     <th nowrap="" ap="nowrap" data-wao-bind="event.date1">11/21(水) 19:00〜</th>
                     <td style="width: 250px;" class="btn-group" data-toggle="buttons" role="group" aria-label="...">
                     <label class="btn btn-default active">
-                    <input type="radio"  name="options" value="◯">◯</button>
-                    </label>
-                    <label class="btn btn-default">
-                    <input type="radio" name="options" value="△">△</button>
-                    </label>
-                    <label class="btn btn-default">
-                    <input type="radio" name="options" value="×">×</button>
-                    </label>
-                    </td>
-                    <input id="data1" type="hidden" class="form-control" name="schedule.date1" value="○">
-                  </tr>
-                  <tr>
-                    <th nowrap="" ap="nowrap" data-wao-bind="event.date2">11/22(木) 19:00〜</th>
-                    <td style="width: 250px;" class="btn-group" data-toggle="buttons" role="group" aria-label="...">
-                    <label class="btn btn-default active">
-                    <input type="radio" name="options1" value="◯">◯</button>
+                    <input type="radio"  name="options1" value="◯">◯</button>
                     </label>
                     <label class="btn btn-default">
                     <input type="radio" name="options1" value="△">△</button>
@@ -120,13 +105,13 @@
                     <input type="radio" name="options1" value="×">×</button>
                     </label>
                     </td>
-                    <input id="data2" type="hidden" class="form-control" name="schedule.date2" value="△">
+                    <input id="date1" type="hidden" class="form-control" name="schedule.date1" value="○">
                   </tr>
                   <tr>
-                    <th nowrap="" ap="nowrap" data-wao-bind="event.date3">11/23(金) 19:00〜</th>
+                    <th nowrap="" ap="nowrap" data-wao-bind="event.date2">11/22(木) 19:00〜</th>
                     <td style="width: 250px;" class="btn-group" data-toggle="buttons" role="group" aria-label="...">
                     <label class="btn btn-default active">
-                    <input type="radio"  name="options2" value="◯">◯</button>
+                    <input type="radio" name="options2" value="◯">◯</button>
                     </label>
                     <label class="btn btn-default">
                     <input type="radio" name="options2" value="△">△</button>
@@ -135,7 +120,22 @@
                     <input type="radio" name="options2" value="×">×</button>
                     </label>
                     </td>
-                    <input id="data3" type="hidden" class="form-control" name="schedule.date3" value="×">
+                    <input id="date2" type="hidden" class="form-control" name="schedule.date2" value="○">
+                  </tr>
+                  <tr>
+                    <th nowrap="" ap="nowrap" data-wao-bind="event.date3">11/23(金) 19:00〜</th>
+                    <td style="width: 250px;" class="btn-group" data-toggle="buttons" role="group" aria-label="...">
+                    <label class="btn btn-default active">
+                    <input type="radio"  name="options3" value="◯">◯</button>
+                    </label>
+                    <label class="btn btn-default">
+                    <input type="radio" name="options3" value="△">△</button>
+                    </label>
+                    <label class="btn btn-default">
+                    <input type="radio" name="options3" value="×">×</button>
+                    </label>
+                    </td>
+                    <input id="date3" type="hidden" class="form-control" name="schedule.date3" value="○">
                   </tr>
                 </tbody>
               </table>
@@ -143,7 +143,7 @@
             <br>
             <label for="event">コメント</label><br>
           <small>個人が特定し得る内容は入力しないでください。</small>
-          <input type="text" class="form-control" name="schedule.comment">
+          <input type="text" class="form-control" name="schedule.comment" value="">
           <br><br>
           <button id="kosinbt" class="btn btn-success btn-lg col-md-8 col-md-offset-2 col-xs-8 col-xs-offset-2">更新する</button>
         </div>
@@ -155,11 +155,30 @@
     $(document).ready(function(){
       $('#scheduleForm').attr('action', $('#scheduleForm').attr('action') + '&schedule.event_id=' + getEventId());
       $('#eventId').val(getEventId());
+
+      $('#bt1').click(function(){
+        document.getElementById('bt1').style.display = 'none';
+        document.getElementById('kosin').style.display='block';
+        location.href="#kosin";
+      });
+
+      $("input[name=options1]").change(function(){
+        $('#date1').val($("input[name=options1]:checked").val());
+      });
+      $("input[name=options2]").change(function(){
+        $('#date2').val($("input[name=options2]:checked").val());
+      });
+      $("input[name=options3]").change(function(){
+        $('#date3').val($("input[name=options3]:checked").val());
+      });
     });
 
     function getEventId() {
         var url   = location.href;
         parameters    = url.split("?");
+        if (parameters.length <= 1) {
+          return "";
+        }
         params   = parameters[1].split("&");
         var paramsArray = [];
         for ( i = 0; i < params.length; i++ ) {
@@ -170,21 +189,6 @@
         var eventId = paramsArray["event.id"];
         return eventId;
     }
-    </script>
-
-    <script>
-     $(function(){
-      $('#bt1').click(function(){
-        document.getElementById('bt1').style.display = 'none';
-        document.getElementById('kosin').style.display='block';
-        location.href="#kosin";
-      });
-        $('#data1').val($("input[name=options]:checked").val());
-        $('#data2').val($("input[name=options1]:checked").val());
-        $('#data3').val($("input[name=options2]:checked").val());
-
-
-    });
     </script>
   </body>
 </html>
