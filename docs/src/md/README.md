@@ -33,7 +33,7 @@ AQUAを使用することでローカルの開発環境構築が不要となり�
 
 サンプルhtmlを用意したので以下のURLからダウンロードしてください。
 
-[スケジュール調整アプリサンプルhtml](http://google.com "サンプル")
+[スケジュール調整アプリサンプルhtml](https://github.com/yujiroarai/node-wao/raw/master/chousei_html.zip "サンプル")
 
 
 
@@ -107,7 +107,7 @@ __eventというコレクションのnameというフィールドにinputタグ�
 
 属性を埋め込んだサンプルhtmlはこちらです。
 
-[index.htmlに属性を埋め込んだ版](http://google.com "index.htmlに属性を埋め込んだ版")
+[index.htmlに属性を埋め込んだ版](https://github.com/yujiroarai/node-wao/blob/master/templates/myapp_8765/index.html "index.htmlに属性を埋め込んだ版")
 
 
 
@@ -250,7 +250,7 @@ __data-wao-iterator="schedule"__とすることでscheduleテーブルの情報�
 
 完成版のソースは以下からダウンロードできるので参考にしてください^^
 
-[スケジュール調整アプリサンプルhtml完成版](http://google.com "サンプル完成版")
+[スケジュール調整アプリサンプルhtml完成版](https://github.com/yujiroarai/node-wao/raw/master/chousei_wao.zip "サンプル完成版")
 
 
 ## ３.統合開発環境AQUAにhtmlをアップロード

@@ -86,4 +86,4 @@
 ## サンプルアプリ
 上記に記載された属性は、全てサンプルアプリで使用していますので、そちらもご参照ください。
 
-[調整さんPlus](https://github.com/yujiroarai/node-wao/tree/master/templates/myapp_8765)
+[サンプルアプリ](https://github.com/yujiroarai/node-wao/raw/master/chousei_wao.zip)
