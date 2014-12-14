@@ -1,1 +1,0 @@
-$(function(){"use strict";var a=function(){var a="md/API.md";$.ajax({url:a}).success(function(a){$("#markdown_content").html(marked(a)),$("pre code").each(function(a,b){hljs.highlightBlock(b)})}).error(function(a){console.dir(a),$("#markdown_content").html(404===a.status?a.status+" "+a.statusText:a.status+" "+a.statusText)})};hljs.configure({classPrefix:"hljs-"}),a()});
