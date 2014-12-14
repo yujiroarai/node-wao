@@ -15,10 +15,6 @@ $(function(){'use strict';
       }
     });
   };
-  // ハッシュが変わった時
-  $(window).hashchange(function(){
-    movePage();
-  });
   hljs.configure({classPrefix: 'hljs-'});
   movePage();
 });

@@ -39,16 +39,23 @@ module.exports = function(grunt) {'use strict';
       }
     },
     copy: {
-      main: {
+      html: {
         expand: true,
         flatten: true,
         src: 'docs/src/**/*.html',
         dest: 'docs/dest/'
       },
+      md: {
+        expand: true,
+        flatten: true,
+        src: 'docs/src/md/**/*',
+        dest: 'docs/dest/md'
+      },
     },
     connect: {
       server: {
         options: {
+          hostname: '*',
           port: 9000,
         }
       }
