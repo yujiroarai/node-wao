@@ -362,17 +362,6 @@ var WaoPageFactory = function() {
     bind : function() {
       var $dom = $(this.responseData); // TODO：<!DOCTYPE>に対応できてない ＆ parseできない時の処理が必要
       var me = this;
-      // GETパラメタにバインド
-      $dom.find('a').each(function(){
-        if ($(this).attr('href') != null) {
-          $(this).attr('href', me.bindGetParam($(this).attr('href'), 0, false));
-        }
-      });
-      $dom.find('form').each(function(){
-        if ($(this).attr('action') != null) {
-          $(this).attr('action', me.bindGetParam($(this).attr('action'), 0, false));
-        }
-      });
       // data-wao-bind属性にバインド（innerHtml）
       $dom.find('[data-wao-bind]').each(function(){
         var val = $(this).attr('data-wao-bind');
@@ -460,6 +449,19 @@ var WaoPageFactory = function() {
           $myTag.append($temporary);
         }
       });
+
+      // GETパラメタにバインド
+      $dom.find('a').each(function(){
+        if ($(this).attr('href') != null) {
+          $(this).attr('href', me.bindGetParam($(this).attr('href'), 0, false));
+        }
+      });
+      $dom.find('form').each(function(){
+        if ($(this).attr('action') != null) {
+          $(this).attr('action', me.bindGetParam($(this).attr('action'), 0, false));
+        }
+      });
+
       // TODO:each(function(){})を使ってるから同期が必要じゃ？？？
       this.responseData = $dom.selfHtml();
     },
@@ -505,7 +507,8 @@ var WaoPageFactory = function() {
     // 参照文字列から自動的に適切なオブジェクトを選択して、参照文字列に対応するデータを返却する
     getValue : function(col, prop, index) {
       // TODO：_DBとか_SESって修飾子がついていたら・・・的な処理が今後必要
-      var val = '（データが見つかりません）';
+      // TODO:（データが見つかりません）は、とりあえず表示しないようにする
+      var val = '';
       var key = 'undefined';
       if (col == '_FILE') {
           key = '_FILE';
