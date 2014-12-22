@@ -555,7 +555,7 @@ var WaoPageFactory = function() {
       var walk = function(p, callback) {
         var results = [];
         fs.readdir(p, function (err, files) {
-          if (err) callback(err, []);
+          if (err) return callback(err, []);
           var pending;
           if (files) {
             pending = files.length;
