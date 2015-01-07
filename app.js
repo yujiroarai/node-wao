@@ -77,7 +77,7 @@ var WaoAppFactory = function() {
                     response.end(waoPage.getResponseData());
                   }
                 } else if (status == 301) {
-                  var redirectUrl = 'http://localhost:' + myWaoApp.port + waoPage.getRedirectUrl(); // TODO：ホスト名とか
+                  var redirectUrl = 'http://' + request.headers.host + waoPage.getRedirectUrl(); // TODO：プロトコルが固定・・・
                   console.log('Start response. statusCode=' + status + ', Location="' + redirectUrl + '"');
                   response.writeHead(status, { 'Location': redirectUrl });
                   response.end();
